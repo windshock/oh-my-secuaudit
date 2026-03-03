@@ -41,6 +41,11 @@ flowchart LR
     EH --> R
     C --> R
 
+    R --> FB["Feedback plan: missing evidence, boundary gaps, target flows, rule/probe updates"]
+    FB --> S
+    FB --> D
+    FB --> E
+
     R --> O["security-architecture-review.md: DFD, Attack Flow, Scenario Table, Imported Findings Mapping, Confidence and Gaps"]
 ```
 
@@ -79,7 +84,18 @@ flowchart LR
 1. Run producer skills (`static`, `runtime`, `external`) in parallel where possible.
 2. Normalize findings with the common contract (`finding_id`, `severity`, `provenance`, `impacted_flow`).
 3. Run `security-architecture-review` to map findings into DFD nodes, trust boundaries, and attack scenarios.
-4. Close confirmation gaps by upgrading `provenance` only when new direct evidence exists.
+4. Generate a feedback plan from architecture gaps (missing evidence, unresolved boundaries, uncertain flows).
+5. Re-run producers with focused scope from the feedback plan, then re-run architecture review.
+6. Upgrade `provenance` only when new direct evidence exists.
+
+## Closed-Loop Model (Producer <-> Architecture)
+
+1. Producers find candidates and initial confirmations.
+2. Architecture review synthesizes system-level risk and identifies confirmation gaps.
+3. Gaps are translated into targeted producer actions (new rules, new probes, deeper binary/source tracing).
+4. Producers return refined evidence.
+5. Architecture review updates DFD/Attack Flow and confidence.
+6. Repeat until major gaps are closed.
 
 ## Quality Gates Before Final Report
 
