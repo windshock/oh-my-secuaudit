@@ -48,7 +48,31 @@ flowchart LR
 
     R --> O["security-architecture-review.md: DFD, Attack Flow, Scenario Table, Imported Findings Mapping, Confidence and Gaps"]
     R --> P["security-product-requirements.md: requirement backlog and lifecycle state"]
+
+    classDef static fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20;
+    classDef runtime fill:#fff3e0,stroke:#ef6c00,color:#e65100;
+    classDef external fill:#e3f2fd,stroke:#1565c0,color:#0d47a1;
+    classDef review fill:#fff8e1,stroke:#f9a825,color:#e65100;
+    classDef contract fill:#eceff1,stroke:#455a64,color:#263238;
+    classDef artifact fill:#f5f5f5,stroke:#616161,color:#212121;
+    classDef feedback fill:#e0f2f1,stroke:#00695c,color:#004d40;
+
+    class S,SO static;
+    class D,DO runtime;
+    class E,EO,EH external;
+    class R review;
+    class C contract;
+    class O,P artifact;
+    class FB feedback;
 ```
+
+Legend:
+- Green: static producer flow
+- Orange: runtime producer flow
+- Blue: external producer flow
+- Yellow: architecture synthesis
+- Gray: common contract/artifacts
+- Teal: feedback loop to producers
 
 ## Handoff Contract (Why It Matters)
 
@@ -111,6 +135,11 @@ flowchart LR
 2. External runtime-hop components (e.g. RP relay, mobile SDK) appear explicitly in DFD node/edge/boundary mapping.
 3. Attack Flow scenarios map back to scenario IDs and imported finding IDs.
 4. `Confidence & Gaps` clearly lists unresolved confirmation items.
+
+## Project Docs
+
+- Release notes: `RELEASE_NOTES.md`
+- Future plan: `ROADMAP.md`
 
 ## Notes
 
