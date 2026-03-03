@@ -62,6 +62,7 @@ Produce architecture-focused security review artifacts from code: DFD with trust
   - `severity`
 - Prefer the shared `reporting_summary_schema.json` format from static/dast/external skills when ingesting run summaries.
 - If any source omits `provenance` or `impacted_flow`, keep the finding as `not-confirmed` and record a confirmation gap.
+- For High/Critical findings, map each item to at least one security product requirement (`SPR-*`) or record an explicit risk-acceptance reason.
 
 ### 2.5) Existing Vulnerability Report Intake (Markdown)
 - Treat existing reports (for example `vuln_report_*.md`) as first-class architecture inputs.
@@ -138,6 +139,34 @@ Produce architecture-focused security review artifacts from code: DFD with trust
 - If a separate Deep Research document exists, map its threat themes to concrete scenarios and note the mapping explicitly.
 - Use the external threat mapping to validate that all critical surfaces are covered in DFD/Attack Flow.
 
+### 6.2) Security Product Requirements (SPR) Generation
+- Convert architecture risks and confirmation gaps into actionable product requirements.
+- Each requirement must be testable and owned.
+- Minimum requirement fields:
+  - `requirement_id` (stable, e.g., `SPR-001`)
+  - `title`
+  - `statement` (normative requirement)
+  - `linked_scenarios` (e.g., `AS-01`, `AS-07`)
+  - `linked_findings` (e.g., `F-PO-LOGIN-001`)
+  - `priority` (`P0|P1|P2|P3`)
+  - `owner` (team/service)
+  - `target_milestone` (release/sprint/date)
+  - `status` (`draft|planned|in_progress|blocked|done|deferred|accepted-risk`)
+  - `acceptance_criteria` (verifiable checks)
+  - `verification_evidence` (PR/test/report links once available)
+  - `last_reviewed_at` (YYYY-MM-DD)
+
+### 6.3) Continuous Requirement Lifecycle
+- Maintain a persistent backlog file: `./security-product-requirements.md` (default).
+- On every architecture review run:
+  - Add new requirements for newly confirmed risks/gaps.
+  - Update status/owner/milestone for existing requirements.
+  - Close requirements only with verification evidence.
+  - Mark unresolved items with blocking dependencies.
+- Keep a review delta in the architecture report:
+  - `added`, `updated`, `closed`, `deferred`, `accepted-risk`
+- Feed unresolved gaps back to producer skills as targeted follow-up tasks.
+
 ### 7) High-Risk Analysis (Code-Based)
 - For top-priority scenarios, add a short code-based analysis section:
   - Code evidence (file paths)
@@ -178,6 +207,8 @@ Produce architecture-focused security review artifacts from code: DFD with trust
   15. Vulnerability family mapping table
   16. PoC evidence binding matrix (when PoC/runtime evidence is available)
   17. System-context DFD addendum for imported external components (component node + hop + trust boundary)
+  18. Security Product Requirements backlog summary
+  19. Requirements lifecycle delta (added/updated/closed/deferred/accepted-risk)
 
 ## Markdown Reporting (Required)
 - Always create a Markdown report file as an output artifact, not only a chat response.
@@ -205,6 +236,12 @@ Produce architecture-focused security review artifacts from code: DFD with trust
 - If imported findings include runtime hop components (e.g., RP relay, mobile SDK, external parser service), add:
   - `## System Context Addendum`
   - Per component: `component`, `role`, `incoming edge`, `outgoing edge`, `trust boundary`, `confirmation status`
+- Always create or update `./security-product-requirements.md` unless the user provides another path.
+- In the architecture report, include:
+  - `## Security Product Requirements` (summary table)
+  - `## Requirement Lifecycle Delta` (what changed in this run)
+- Keep requirement IDs stable across runs (never recycle IDs).
+- Optional machine-readable output: `security-product-requirements.json` validated against `schemas/security_product_requirement_schema.json`.
 - When external binary analysis was used, add:
   - `## External Analysis Inputs` (files used from external-software-analysis)
   - `## Imported Findings Mapping` (finding_id -> DFD/Attack Scenario + provenance tag)
@@ -223,6 +260,12 @@ Use these as the default “stop” conditions unless the user specifies otherwi
 7. Imported findings from prior reports are mapped to DFD/Attack Scenarios with `provenance` and `impacted_flow`.
 8. For runtime-confirmed claims, at least one runtime artifact reference is captured.
 9. If imported findings reference external runtime-hop components, those components are explicitly present in DFD (node + edges + boundary).
+10. High/Critical risks are mapped to tracked security product requirements or documented as accepted-risk with rationale.
+11. Requirement lifecycle delta is recorded for this run.
+
+## Resources
+- Template: `references/security_product_requirements_template.md`
+- Schema: `schemas/security_product_requirement_schema.json`
 
 ## Diagram Conventions
 - DFD uses `trusted`, `untrusted`, `neutral` classes for nodes.

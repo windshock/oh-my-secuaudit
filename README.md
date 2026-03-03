@@ -16,7 +16,7 @@ Security skill collection for Codex-style workflows.
 | `sec-audit-static` | What is vulnerable in source code and dependencies? | source repo | finding JSON, task/final report JSON, markdown report, `reporting_summary` | `security-architecture-review` |
 | `sec-audit-dast` | What is exposed or exploitable at runtime? | domains/IPs/endpoints/ASM exports | SARIF/CSV findings, finding JSON, `reporting_summary` | `security-architecture-review` |
 | `external-software-analysis` | What risks exist in third-party binaries/packages? | jar/aar/so/external package | markdown report, finding JSON, architecture handoff markdown, `reporting_summary` | `security-architecture-review` |
-| `security-architecture-review` | How do all findings affect trust boundaries and critical flows? | static/dast/external outputs + repo evidence | `security-architecture-review.md` with DFD, Attack Flow, scenario mapping, risk summary | final artifact |
+| `security-architecture-review` | How do all findings affect trust boundaries and critical flows? | static/dast/external outputs + repo evidence | `security-architecture-review.md` + `security-product-requirements.md` (tracked backlog and lifecycle delta) | final artifact |
 
 ## End-to-End Relationship Map
 
@@ -47,6 +47,7 @@ flowchart LR
     FB --> E
 
     R --> O["security-architecture-review.md: DFD, Attack Flow, Scenario Table, Imported Findings Mapping, Confidence and Gaps"]
+    R --> P["security-product-requirements.md: requirement backlog and lifecycle state"]
 ```
 
 ## Handoff Contract (Why It Matters)
@@ -69,6 +70,13 @@ flowchart LR
 | `sec-audit-static` | finding JSON with required fields, `reporting_summary` | markdown report and taint/source-sink notes |
 | `sec-audit-dast` | finding JSON or normalized runtime findings with required fields, `reporting_summary` | SARIF and reproducible probe metadata |
 | `external-software-analysis` | finding JSON with required fields | `external-analysis-architecture-handoff.md` |
+
+## Architecture-to-Product Bridge
+
+- `security-architecture-review` converts High/Critical risks and unresolved gaps into `SPR-*` requirements.
+- Each `SPR-*` must include owner, target milestone, status, and testable acceptance criteria.
+- Requirement status is updated on every architecture run with a delta:
+  - `added`, `updated`, `closed`, `deferred`, `accepted-risk`
 
 ## Which Skills To Run
 
