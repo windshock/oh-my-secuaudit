@@ -9,39 +9,84 @@ Security skill collection for Codex-style workflows.
 - `skills/external/external-software-analysis`: third-party software/binary analysis workflow
 - `skills/architect/security-architecture-review`: security architecture review workflow
 
-## Skill Relationships
+## Capability Matrix
+
+| Skill | Primary Question | Typical Input | Primary Output | Consumed By |
+|---|---|---|---|---|
+| `sec-audit-static` | What is vulnerable in source code and dependencies? | source repo | finding JSON, task/final report JSON, markdown report, `reporting_summary` | `security-architecture-review` |
+| `sec-audit-dast` | What is exposed or exploitable at runtime? | domains/IPs/endpoints/ASM exports | SARIF/CSV findings, finding JSON, `reporting_summary` | `security-architecture-review` |
+| `external-software-analysis` | What risks exist in third-party binaries/packages? | jar/aar/so/external package | markdown report, finding JSON, architecture handoff markdown, `reporting_summary` | `security-architecture-review` |
+| `security-architecture-review` | How do all findings affect trust boundaries and critical flows? | static/dast/external outputs + repo evidence | `security-architecture-review.md` with DFD, Attack Flow, scenario mapping, risk summary | final artifact |
+
+## End-to-End Relationship Map
 
 ```mermaid
 flowchart LR
-    S["sec-audit-static"] --> R["security-architecture-review"]
-    D["sec-audit-dast"] --> R
-    E["external-software-analysis"] --> R
-    E --> H["external-analysis-architecture-handoff.md"]
-    H --> R
+    subgraph Producers
+        S["sec-audit-static"]
+        D["sec-audit-dast"]
+        E["external-software-analysis"]
+    end
+
+    S --> SO["Static findings and reporting_summary"]
+    D --> DO["Runtime findings and reporting_summary"]
+    E --> EO["External findings and reporting_summary"]
+    E --> EH["external-analysis-architecture-handoff.md"]
+
+    C["Common finding contract: finding_id, severity, provenance, impacted_flow"]
+
+    SO --> R["security-architecture-review"]
+    DO --> R
+    EO --> R
+    EH --> R
+    C --> R
+
+    R --> O["security-architecture-review.md: DFD, Attack Flow, Scenario Table, Imported Findings Mapping, Confidence and Gaps"]
 ```
 
-## Data Contract Between Skills
+## Handoff Contract (Why It Matters)
 
-- Producer skills:
-  - `sec-audit-static`
-  - `sec-audit-dast`
-  - `external-software-analysis`
-- Consumer/synthesis skill:
-  - `security-architecture-review`
-- Common required finding fields for synthesis:
+- `security-architecture-review` is not another scanner.
+- It is the synthesis layer that merges heterogeneous evidence and decides:
+  - which risks are architecture-confirmed
+  - which are external/runtime-only
+  - which remain `not-confirmed`
+- Cross-skill normalization relies on these fields:
   - `finding_id` (or `id`)
   - `severity`
   - `provenance` (`binary-confirmed|source-confirmed|runtime-confirmed|not-confirmed`)
   - `impacted_flow` (e.g. `F1`, `F2`)
-- Common summary format:
-  - `reporting_summary_schema.json` (present in static/runtime/external skills)
 
-## Typical Orchestration
+## Minimal Artifact Set For Architecture Review
 
-1. Run `sec-audit-static` for source-based findings.
-2. Run `sec-audit-dast` for runtime/asset findings.
-3. Run `external-software-analysis` for binary/package findings and handoff markdown.
-4. Run `security-architecture-review` to synthesize all findings into DFD, attack flow, scenario mapping, and final architecture risk summary.
+| Source Skill | Required For Synthesis | Recommended |
+|---|---|---|
+| `sec-audit-static` | finding JSON with required fields, `reporting_summary` | markdown report and taint/source-sink notes |
+| `sec-audit-dast` | finding JSON or normalized runtime findings with required fields, `reporting_summary` | SARIF and reproducible probe metadata |
+| `external-software-analysis` | finding JSON with required fields | `external-analysis-architecture-handoff.md` |
+
+## Which Skills To Run
+
+| Situation | Run |
+|---|---|
+| Source repository audit | `sec-audit-static` -> `security-architecture-review` |
+| External endpoint/runtime assessment | `sec-audit-dast` -> `security-architecture-review` |
+| Third-party binary/package risk | `external-software-analysis` -> `security-architecture-review` |
+| Full blended assessment | `sec-audit-static` + `sec-audit-dast` + `external-software-analysis` -> `security-architecture-review` |
+
+## Recommended Orchestration
+
+1. Run producer skills (`static`, `runtime`, `external`) in parallel where possible.
+2. Normalize findings with the common contract (`finding_id`, `severity`, `provenance`, `impacted_flow`).
+3. Run `security-architecture-review` to map findings into DFD nodes, trust boundaries, and attack scenarios.
+4. Close confirmation gaps by upgrading `provenance` only when new direct evidence exists.
+
+## Quality Gates Before Final Report
+
+1. Every imported finding has `provenance` and `impacted_flow`.
+2. External runtime-hop components (e.g. RP relay, mobile SDK) appear explicitly in DFD node/edge/boundary mapping.
+3. Attack Flow scenarios map back to scenario IDs and imported finding IDs.
+4. `Confidence & Gaps` clearly lists unresolved confirmation items.
 
 ## Notes
 
