@@ -1,0 +1,35 @@
+# FIDO Server Vulnerability Intake Example
+
+This reference shows how to feed existing vulnerability reports into `security-architecture-review`.
+
+## Input Bundle
+
+- `inisafe_fido_zero_day_process.md`
+- `vuln_report_android_deserialization.md`
+- `vuln_report_jsonio_type_deser.md`
+- `vuln_report_padding_oracle.md`
+- `vuln_report_rpapi_jsonio_type_deser.md`
+
+## Normalization Targets
+
+For each imported report, extract and map:
+
+- `finding_id`
+- `severity`
+- `provenance` (`binary-confirmed|source-confirmed|runtime-confirmed|not-confirmed`)
+- `impacted_flow` (flow IDs like `F1`, `F2`)
+- Vulnerability family (`deserialization`, `crypto-oracle`, etc.)
+
+## Mapping Expectations
+
+1. Connect each finding to at least one attack scenario (`AS-*`).
+2. Link each finding to explicit DFD node(s) and trust boundary crossing(s).
+3. If runtime-hop components are present (e.g., RP relay/API hop), model them as explicit DFD nodes and edges.
+4. Keep uncertain service impact as `not-confirmed` until direct evidence exists.
+5. Map High/Critical residual risks to `SPR-*` requirements.
+
+## Reuse Guidance
+
+- This is a reference pattern, not a hardcoded product profile.
+- When adapting to another target, replace service-specific labels and evidence paths.
+- Preserve the normalization contract and mapping structure to keep synthesis quality consistent.

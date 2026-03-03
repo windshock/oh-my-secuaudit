@@ -119,6 +119,19 @@ Legend:
 | `external-software-analysis` | finding JSON with required fields | `external-analysis-architecture-handoff.md` |
 | external threat research (manual) | not required for run completion | threat themes from advisories/intel mapped to attack scenarios |
 
+## Reference Example Intake (FIDO Server)
+
+The architecture-review flow has been exercised with this real report bundle:
+- `inisafe_fido_zero_day_process.md`
+- `vuln_report_android_deserialization.md`
+- `vuln_report_jsonio_type_deser.md`
+- `vuln_report_padding_oracle.md`
+- `vuln_report_rpapi_jsonio_type_deser.md`
+
+How to reuse:
+- Keep the same normalization contract (`finding_id`, `severity`, `provenance`, `impacted_flow`).
+- Replace service-specific names/paths with your own target context.
+
 ## Architecture-to-Product Bridge
 
 - `security-architecture-review` converts High/Critical risks and unresolved gaps into `SPR-*` requirements.
