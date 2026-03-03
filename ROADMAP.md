@@ -2,60 +2,76 @@
 
 ## Direction
 
-Build a repeatable security workflow where producer skills and architecture review operate as a closed loop, and architecture outputs become continuously managed product requirements.
+Keep this repository as a lightweight Codex/Claude skill collection, while ensuring output contracts are reproducible and continuously validated.
 
-## 2026 Q2
+## Current Plan: Level 2 (Team Sharing + Minimum Reproducibility)
 
-### 1) Requirement Lifecycle Hardening
-- Add optional helper script to upsert `SPR-*` entries from architecture review outputs.
-- Add requirement ID collision checks and stale requirement detection.
-- Add explicit risk-acceptance metadata template (approver, expiry, review date).
+### Goals
 
-### 2) Cross-Skill Contract Validation
-- Add contract linter for required fields:
-  - `finding_id`
+1. Provide one end-to-end example set that new users can understand quickly.
+2. Validate not only schema file existence, but also that sample outputs pass schemas.
+3. Keep CI minimal: `validate + examples validate`.
+4. Reduce confusion and duplication only where safe, without large refactors.
+
+### Out of Scope (This Phase)
+
+- No `secuaudit` CLI framework.
+- No release bundling / containerization.
+- No full architect auto-synthesis engine.
+- No major schema renaming/refactor wave.
+- No broad quality gate expansion (`ruff`, `mypy`, etc.).
+
+## 2026 Q2 (Level 2 Execution)
+
+### 1) Quickstart and End-to-End Example Package
+
+- Add `examples/end-to-end-run/` with:
+  - `README.md`
+  - `inputs/static`, `inputs/runtime`, `inputs/external`
+  - `outputs/static/task_output.json`
+  - `outputs/runtime/task_output.json`
+  - `outputs/external/task_output.json`
+  - `outputs/reporting_summary.json`
+  - optional `outputs/architect/*` placeholders
+- Keep sample outputs minimal (1-2 findings each) but contract-accurate:
   - `severity`
   - `provenance`
   - `impacted_flow`
-- Fail fast when architecture synthesis input violates contract.
 
-### 3) Documentation and Examples
-- Add end-to-end sample run package:
-  - minimal producer outputs
-  - synthesized architecture review
-  - populated `security-product-requirements.md`
+### 2) Validator Upgrade (Minimal but Strong)
 
-## 2026 Q3
+- Extend `scripts/validate_skills_repo.py`:
+  - validate schema files with `jsonschema` (schema self-validation)
+  - add `--with-examples` option for validating sample output files
+- Initial examples-to-schema mapping can be explicit/hardcoded.
 
-### 1) CI Integration
-- Add CI checks for:
-  - markdown link validity
-  - schema validation for sample JSONs
-  - skill structure consistency (references/schemas/scripts presence)
+### 3) CI Minimal Expansion
 
-### 2) Scenario and Flow Traceability
-- Add machine-readable mapping export:
-  - scenario -> finding -> flow -> requirement
-- Add drift check that flags requirements not linked to current scenarios/findings.
+- Update `.github/workflows/ci.yml` to run:
+  - dependency install (`jsonschema`)
+  - `python3 scripts/validate_skills_repo.py --with-examples`
+- Do not add heavyweight test/lint jobs in this phase.
 
-### 3) Packaging
-- Add release packaging profile:
-  - tagged bundle zip
-  - checksums
-  - release metadata for offline distribution.
+### 4) Safe Deduplication Only (Optional)
 
-## 2026 Q4
+- Consider deduping identical `generate_reporting_summary.py` scripts.
+- Apply only if no skill UX regression occurs.
+- If workflow ergonomics degrade, postpone deduplication.
 
-### 1) Feedback Loop Automation
-- Add generator for producer follow-up task lists from architecture gaps.
-- Add status roll-up dashboard material (markdown/json) for leadership review.
+## Done Definition (Level 2 Exit Criteria)
 
-### 2) Multi-Repo Program View
-- Add portfolio-level guidance for combining multiple service architecture reviews.
-- Standardize cross-service flow IDs and requirement aggregation strategy.
+- `examples/end-to-end-run` exists with usage README.
+- `python3 scripts/validate_skills_repo.py --with-examples` passes locally.
+- CI blocks merge when the above validation fails.
+- Team members can copy/extend sample JSON outputs for their own assessments.
 
-## Backlog Candidates
+## Expected Impact
 
-- Threat model profile templates by system type (API gateway, mobile backend, auth server).
-- Optional SBOM-aware prioritization in static/external producers.
-- Common glossary and naming conventions for scenario/flow/requirement IDs.
+- Moves the repo from "skill directories only" to a sample-backed, contract-validated skill repository.
+- Preserves lightweight skill-first operation without over-engineering.
+
+## Next (Post-Level 2 Candidates)
+
+- Requirement lifecycle hardening (`SPR-*` collision/staleness checks).
+- Scenario -> finding -> flow -> requirement machine-readable mapping.
+- Multi-repo portfolio aggregation guidance.
