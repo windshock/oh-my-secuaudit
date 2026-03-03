@@ -75,6 +75,9 @@ You can run scripts from any working directory by invoking the script path direc
 - Unknown taxonomy: classify non-verified candidates as one of `unknown_no_edges`, `unknown_dynamic_dispatch`, `unknown_context_budget`, `unknown_needs_runtime`, `unknown_tooling_error`, `indeterminate_policy`, or `benign_unreachable` instead of a generic `unknown`.
 - Injection review rule: if you cannot prove a Source→Sink SQL injection flow, you must still record **suspected candidates** (file:line + reason) in the task notes/metadata. Do not mark them as confirmed findings unless a clear Source→Sink path is demonstrated.
 - For every confirmed finding, you must record a **code/input flow** in the finding JSON as `flow` (list of steps). If the flow cannot be determined, record a single-step flow explaining why (e.g., "flow not determined: insufficient call-chain context"). Do not omit flow in reports.
+- Every finding JSON must include:
+  - `provenance` (`binary-confirmed|source-confirmed|runtime-confirmed|not-confirmed`)
+  - `impacted_flow` (one or more architecture flow IDs like `F1`, `F2`)
 - For any confirmed finding, you must create or update Semgrep/Joern rules (unless explicitly waived by the user).
 - After rule updates, re-run seed generation and re-check affected phases before finalizing outputs.
 - For 2-2 (injection), if the codebase uses SQL/JDBC/R2DBC, always check for dynamic SQL assembly patterns (`toSql`, `String.format`, string concatenation, template SQL) even if seeds are empty.
@@ -85,6 +88,7 @@ You can run scripts from any working directory by invoking the script path direc
    - Every task output **must** include `metadata.source_repo_url`, `metadata.source_repo_path`, and `metadata.source_modules`.
    - If a wiki report is published, include `metadata.report_wiki_url` and set `metadata.report_wiki_status`.
 - Guardrail: ensure every finding has `request_mapping` populated (run the enrichment helper if empty) and rerun `tools/scripts/validate_task_output.py`.
+- Guardrail: ensure every finding has `provenance` and `impacted_flow` populated before merge/report.
 - Guardrail: ensure every finding includes facet tags `layer`, `boundary`, `sink_class` (use `unknown_*` when uncertain) and store short tagging evidence in state store.
 - Guardrail: ensure every candidate/finding has `snapshot_scope` and `state_store_run_id` in metadata.
 - Guardrail: unknown classification must use the defined taxonomy (no generic `unknown`).
@@ -106,7 +110,7 @@ You can run scripts from any working directory by invoking the script path direc
 
 ## Reporting
 - Primary output: task JSONs + `final_report.json` + Markdown report.
-- Use severity mapping from `references/severity_criteria.md` and detailed criteria in `skills/SEVERITY_CRITERIA_DETAIL.md`.
+- Use severity mapping from `references/severity_criteria.md` and detailed criteria in `SEVERITY_CRITERIA_DETAIL.md`.
 - Produce a common summary JSON using `schemas/reporting_summary_schema.json`.
 
 ## Resources

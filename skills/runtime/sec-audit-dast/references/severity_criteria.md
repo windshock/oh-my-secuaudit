@@ -8,4 +8,4 @@ Mapping:
 - Grade 1 -> Info
 
 Detailed criteria:
-- `skills/SEVERITY_CRITERIA_DETAIL.md`
+- `references/severity_criteria_detail.md`

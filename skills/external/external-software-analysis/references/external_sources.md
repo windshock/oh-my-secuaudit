@@ -1,7 +1,16 @@
-# External Analysis Sources
+# External Analysis Sources (Local-Only)
 
-Use this report as the canonical structure and content reference:
-- `~/Downloads/fidosvr/vuln_report_rpapi_jsonio_type_deser.md`
+Use only local files in this skill directory as canonical references.
 
-Follow the discovery flow described in:
-- `~/Downloads/fidosvr/inisafe_fido_zero_day_process.md`
+Canonical report structure:
+- `references/external_report_template.md`
+
+Discovery workflow reference:
+- `references/discovery_process.md`
+
+Severity mapping:
+- `references/severity_criteria.md`
+- `references/severity_criteria_detail.md`
+
+Summary index reference:
+- `references/reporting_summary.md`

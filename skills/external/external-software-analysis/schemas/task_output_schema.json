@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Task Output Schema",
+  "description": "모든 작업 결과가 준수해야 하는 JSON 스키마",
+  "type": "object",
+  "required": ["task_id", "status", "findings", "metadata"],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "description": "작업 ID (예: 1-1, 2-1)",
+      "pattern": "^[0-9]+-[0-9]+$"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["completed", "failed", "partial"],
+      "description": "작업 완료 상태"
+    },
+    "findings": {
+      "type": "array",
+      "description": "발견 사항 목록",
+      "items": {
+        "type": "object"
+      }
+    },
+    "executed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "실행 시각 (ISO 8601)"
+    },
+    "claude_session": {
+      "type": "string",
+      "description": "Claude 세션 ID"
+    },
+    "notes": {
+      "type": "string",
+      "description": "추가 메모"
+    },
+    "errors": {
+      "type": "array",
+      "description": "오류 목록",
+      "items": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "string" },
+          "message": { "type": "string" }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "작업 메타데이터 (파싱 방법, 소스 파일 등)",
+      "required": ["source_repo_url", "source_repo_path", "source_modules"],
+      "additionalProperties": true,
+      "properties": {
+        "source_repo_url": {
+          "type": "string",
+          "description": "진단 대상 레포 URL (예: http://.../repos/pcona/)"
+        },
+        "source_repo_path": {
+          "type": "string",
+          "description": "로컬 레포 경로 (예: /path/to/repo)"
+        },
+        "source_modules": {
+          "type": "array",
+          "description": "진단 대상 모듈/서브프로젝트 목록",
+          "minItems": 1,
+          "items": { "type": "string" }
+        },
+        "source_label": {
+          "type": "string",
+          "description": "보고서에 표시할 소스 경로/URL 라벨"
+        },
+        "report_wiki_url": {
+          "type": "string",
+          "description": "배포된 위키 보고서 URL"
+        },
+        "report_wiki_page_id": {
+          "type": "string",
+          "description": "위키 페이지 ID"
+        },
+        "report_wiki_status": {
+          "type": "string",
+          "description": "위키 보고서 배포 상태",
+          "enum": ["not_published", "published", "failed", "partial"]
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

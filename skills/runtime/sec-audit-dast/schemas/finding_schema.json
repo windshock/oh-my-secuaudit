@@ -19,7 +19,7 @@
       "description": "발견된 취약점 목록",
       "items": {
         "type": "object",
-        "required": ["id", "title", "severity", "category", "description", "request_mapping", "flow", "layer", "boundary", "sink_class", "provenance", "impacted_flow"],
+        "required": ["id", "title", "severity", "category", "description", "provenance", "impacted_flow"],
         "properties": {
           "id": {
             "type": "string",
@@ -67,32 +67,6 @@
             "type": "string",
             "description": "OWASP Top 10 분류"
           },
-          "request_mapping": {
-            "type": "string",
-            "description": "요청 매핑 (예: /api/foo)",
-            "minLength": 1
-          },
-          "flow": {
-            "type": "array",
-            "description": "입력/코드 흐름 단계",
-            "items": { "type": "string" },
-            "minItems": 1
-          },
-          "layer": {
-            "type": "string",
-            "enum": ["controller", "service", "dao", "util", "unknown_layer"],
-            "description": "코드 레이어 분류"
-          },
-          "boundary": {
-            "type": "string",
-            "enum": ["external", "network", "file", "deserialization", "unknown_boundary"],
-            "description": "경계/입력 유형"
-          },
-          "sink_class": {
-            "type": "string",
-            "enum": ["exec", "eval", "sql", "fs", "net", "deserialize", "unknown_sink_class"],
-            "description": "싱크 유형"
-          },
           "provenance": {
             "type": "string",
             "enum": [
@@ -108,19 +82,6 @@
             "description": "아키텍처 리뷰에서 사용하는 영향 흐름 ID 목록 (예: F1, F2)",
             "items": { "type": "string", "minLength": 1 },
             "minItems": 1
-          },
-          "unknown_reason": {
-            "type": "string",
-            "enum": [
-              "unknown_no_edges",
-              "unknown_dynamic_dispatch",
-              "unknown_context_budget",
-              "unknown_needs_runtime",
-              "unknown_tooling_error",
-              "indeterminate_policy",
-              "benign_unreachable"
-            ],
-            "description": "확인 불가 사유 (taxonomy)"
           }
         }
       }
@@ -151,7 +112,7 @@
     "metadata": {
       "type": "object",
       "description": "작업 메타데이터",
-      "required": ["source_repo_url", "source_repo_path", "source_modules", "state_store_run_id", "snapshot_scope"],
+      "required": ["source_repo_url", "source_repo_path", "source_modules"],
       "additionalProperties": true,
       "properties": {
         "source_repo_url": {
@@ -160,7 +121,7 @@
         },
         "source_repo_path": {
           "type": "string",
-          "description": "로컬 레포 경로 (예: /Users/.../Downloads/pcona-src)"
+          "description": "로컬 레포 경로 (예: /path/to/repo)"
         },
         "source_modules": {
           "type": "array",
@@ -184,15 +145,6 @@
           "type": "string",
           "description": "위키 보고서 배포 상태",
           "enum": ["not_published", "published", "failed", "partial"]
-        },
-        "state_store_run_id": {
-          "type": "string",
-          "description": "State Store 실행 식별자"
-        },
-        "snapshot_scope": {
-          "type": "string",
-          "description": "스냅샷 범위",
-          "enum": ["module", "repo", "decompiled-module", "decompiled-repo"]
         }
       }
     }

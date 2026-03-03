@@ -1,11 +1,10 @@
 # ASM/DAST Sources
 
-Canonical ASM toolkit sources (repo: `~/Downloads/asm`):
+Canonical sources for this skill are the local references in this directory:
 
-- Overview and pipeline: `README.md`
-- Process details: `docs/process.md`
-- Quickstart: `docs/QUICKSTART.md`
-- Scripts index: `scripts/README.md`
-- Exploit/detection notes: `docs/exploit.md`
+- `references/asm_scripts.md`
+- `references/asm_csv.md`
+- `references/sarif_conversion.md`
+- `references/severity_criteria.md`
 
 DAST outputs should be normalized to SARIF.

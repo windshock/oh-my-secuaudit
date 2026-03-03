@@ -1,6 +1,6 @@
 # ASM Script Index
 
-This is the primary execution surface for DAST/ASM runs (repo `~/Downloads/asm/scripts/`).
+This is the primary execution surface for DAST/ASM runs.
 
 Core orchestration:
 - `90_full_run_and_confluence.sh`: full pipeline + Confluence update
