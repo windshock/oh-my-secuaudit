@@ -136,6 +136,15 @@ Legend:
 3. Attack Flow scenarios map back to scenario IDs and imported finding IDs.
 4. `Confidence & Gaps` clearly lists unresolved confirmation items.
 
+## Developer Workflow
+
+- Run local validation: `just check` (or `python3 scripts/validate_skills_repo.py`)
+- CI runs the same contract validation on `push`/`pull_request` to `main`.
+- Quick working tree check: `just status`
+
+Release process:
+- See [`.github/RELEASE_GUIDE.md`](.github/RELEASE_GUIDE.md) for versioning/tagging steps.
+
 ## Project Docs
 
 - Release notes: `RELEASE_NOTES.md`

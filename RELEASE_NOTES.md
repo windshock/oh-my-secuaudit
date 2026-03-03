@@ -1,5 +1,20 @@
 # Release Notes
 
+## Unreleased
+
+### Added
+- Repository contract validation script:
+  - `scripts/validate_skills_repo.py`
+- Local task runner:
+  - `justfile` (`check`, `ci-check`, `status`)
+- GitHub CI workflow:
+  - `.github/workflows/ci.yml` (runs validation on `push`/`pull_request`)
+- Release operating guide:
+  - `.github/RELEASE_GUIDE.md`
+
+### Changed
+- `README.md` now includes a developer workflow section that connects local checks, CI checks, and release guidance.
+
 ## 2026-03-03 - v0.4.0
 
 ### Added
