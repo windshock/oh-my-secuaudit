@@ -17,7 +17,7 @@
 - `ROADMAP.md` realigned to a Level 2 plan (examples-first, `--with-examples` schema validation, minimal CI expansion, explicit out-of-scope).
 - `README.md` End-to-End Relationship Map redesigned into 4 layers (producer -> normalize -> synthesis -> lifecycle) with explicit line semantics (required/optional/continuous).
 - `README.md` Relationship Map now includes manual external threat research as a first-class context input and feedback target.
-- Added anonymized vulnerability intake example set in architecture-review documentation and references.
+- Removed case-derived vulnerability intake example set from docs and references to keep guidance fully generic.
 
 ## 2026-03-03 - v0.4.0
 

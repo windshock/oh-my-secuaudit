@@ -79,18 +79,6 @@ Produce architecture-focused security review artifacts from code: DFD with trust
   - `provenance` and `impacted_flow`
 - If a report is library-only or ecosystem-only and no service path is confirmed, keep service impact as `not-confirmed` and list it as a candidate external threat.
 
-### 2.6) Reference Intake Example (Anonymized Production Case)
-- Use the real intake-style bundle below as a reference example:
-  - `zero_day_process.md`
-  - `vuln_report_mobile_deserialization.md`
-  - `vuln_report_json_type_deserialization.md`
-  - `vuln_report_padding_oracle.md`
-  - `vuln_report_api_type_deserialization.md`
-- Normalize each report into the synthesis contract (`finding_id`, `severity`, `provenance`, `impacted_flow`) before DFD/Attack Flow mapping.
-- Keep report-level IDs stable across reruns (do not regenerate IDs from scratch if the same report is reused).
-- If a finding references an RP relay / external hop, model that hop explicitly in DFD boundaries and attack scenarios.
-- If reusing this pattern outside the reference case, replace service names and internal paths but preserve the same normalization fields.
-
 ### 3) DFD + Trust Boundaries
 - Build a DFD that reflects actual code paths.
 - Use explicit trust boundaries. Prefer nesting internal boundaries inside external ones.
@@ -277,7 +265,6 @@ Use these as the default “stop” conditions unless the user specifies otherwi
 
 ## Resources
 - Template: `references/security_product_requirements_template.md`
-- Example: `references/vulnerability_intake_example.md`
 - Schema: `schemas/security_product_requirement_schema.json`
 
 ## Diagram Conventions

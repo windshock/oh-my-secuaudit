@@ -119,19 +119,6 @@ Legend:
 | `external-software-analysis` | finding JSON with required fields | `external-analysis-architecture-handoff.md` |
 | external threat research (manual) | not required for run completion | threat themes from advisories/intel mapped to attack scenarios |
 
-## Reference Example Intake (Anonymized Production Case)
-
-The architecture-review flow has been exercised with this real report bundle:
-- `zero_day_process.md`
-- `vuln_report_mobile_deserialization.md`
-- `vuln_report_json_type_deserialization.md`
-- `vuln_report_padding_oracle.md`
-- `vuln_report_api_type_deserialization.md`
-
-How to reuse:
-- Keep the same normalization contract (`finding_id`, `severity`, `provenance`, `impacted_flow`).
-- Replace service-specific names/paths with your own target context.
-
 ## Architecture-to-Product Bridge
 
 - `security-architecture-review` converts High/Critical risks and unresolved gaps into `SPR-*` requirements.
