@@ -22,6 +22,10 @@ Security skill collection for Codex-style workflows.
 
 ```mermaid
 flowchart LR
+    subgraph L0["Layer 0: Threat Context (Manual, Non-Automated)"]
+        T["External threat research (advisories, KEV/CVE trends, abuse intel)"]
+    end
+
     subgraph L1["Layer 1: Producer Runs"]
         S["sec-audit-static"]
         D["sec-audit-dast"]
@@ -46,6 +50,7 @@ flowchart LR
     D -->|required| N
     E -->|required| N
     E -.->|optional enrichment| EH["external-analysis-architecture-handoff.md"]
+    T -.->|manual threat context| R
 
     N -->|required| R
     EH -.->|optional enrichment| R
@@ -59,15 +64,18 @@ flowchart LR
     FB -.->|targeted re-scan| S
     FB -.->|targeted re-scan| D
     FB -.->|targeted re-analysis| E
+    FB -.->|new threat questions| T
 
     classDef static fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20;
     classDef runtime fill:#fff3e0,stroke:#ef6c00,color:#e65100;
     classDef external fill:#e3f2fd,stroke:#1565c0,color:#0d47a1;
+    classDef threat fill:#ffebee,stroke:#c62828,color:#b71c1c;
     classDef review fill:#fff8e1,stroke:#f9a825,color:#e65100;
     classDef contract fill:#eceff1,stroke:#455a64,color:#263238;
     classDef artifact fill:#f5f5f5,stroke:#616161,color:#212121;
     classDef feedback fill:#e0f2f1,stroke:#00695c,color:#004d40;
 
+    class T threat;
     class S static;
     class D runtime;
     class E,EH external;
@@ -81,6 +89,7 @@ Legend:
 - Green: static producer flow
 - Orange: runtime producer flow
 - Blue: external producer flow
+- Red: external threat context (manual/non-automated input)
 - Yellow: architecture synthesis
 - Gray: contract normalization and artifacts
 - Teal: feedback loop to producers
@@ -108,6 +117,7 @@ Legend:
 | `sec-audit-static` | finding JSON with required fields, `reporting_summary` | markdown report and taint/source-sink notes |
 | `sec-audit-dast` | finding JSON or normalized runtime findings with required fields, `reporting_summary` | SARIF and reproducible probe metadata |
 | `external-software-analysis` | finding JSON with required fields | `external-analysis-architecture-handoff.md` |
+| external threat research (manual) | not required for run completion | threat themes from advisories/intel mapped to attack scenarios |
 
 ## Architecture-to-Product Bridge
 
@@ -129,10 +139,11 @@ Legend:
 
 1. Run producer skills (`static`, `runtime`, `external`) in parallel where possible.
 2. Normalize findings with the common contract (`finding_id`, `severity`, `provenance`, `impacted_flow`).
-3. Run `security-architecture-review` to map findings into DFD nodes, trust boundaries, and attack scenarios.
-4. Generate a feedback plan from architecture gaps (missing evidence, unresolved boundaries, uncertain flows).
-5. Re-run producers with focused scope from the feedback plan, then re-run architecture review.
-6. Upgrade `provenance` only when new direct evidence exists.
+3. Add manual external threat research themes and map them to candidate attack scenarios.
+4. Run `security-architecture-review` to map findings into DFD nodes, trust boundaries, and attack scenarios.
+5. Generate a feedback plan from architecture gaps (missing evidence, unresolved boundaries, uncertain flows, new threat questions).
+6. Re-run producers with focused scope from the feedback plan, then re-run architecture review.
+7. Upgrade `provenance` only when new direct evidence exists.
 
 ## Closed-Loop Model (Producer <-> Architecture)
 
