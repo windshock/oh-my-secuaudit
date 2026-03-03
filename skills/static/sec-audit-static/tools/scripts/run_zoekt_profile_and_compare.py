@@ -113,10 +113,10 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Run zoekt api-max profile and auto-compare")
     ap.add_argument("source_dir")
     ap.add_argument("--out-dir", default="/tmp")
-    ap.add_argument("--name", default="fidosvr_zoekt_api_max")
+    ap.add_argument("--name", default="targetsvc_zoekt_api_max")
     ap.add_argument(
         "--compare-prefix",
-        default="/tmp/fidosvr_zoekt_api_max_prev",
+        default="/tmp/targetsvc_zoekt_api_max_prev",
         help="Previous prefix for auto-compare (expects .api.json/.patterns.json/.enh.json)",
     )
     ap.add_argument("--api-max-candidates", type=int, default=0)
