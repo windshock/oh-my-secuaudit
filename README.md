@@ -22,32 +22,43 @@ Security skill collection for Codex-style workflows.
 
 ```mermaid
 flowchart LR
-    subgraph Producers
+    subgraph L1["Layer 1: Producer Runs"]
         S["sec-audit-static"]
         D["sec-audit-dast"]
         E["external-software-analysis"]
     end
 
-    S --> SO["Static findings and reporting_summary"]
-    D --> DO["Runtime findings and reporting_summary"]
-    E --> EO["External findings and reporting_summary"]
-    E --> EH["external-analysis-architecture-handoff.md"]
+    subgraph L2["Layer 2: Contract Normalization"]
+        N["Normalize findings: finding_id, severity, provenance, impacted_flow"]
+    end
 
-    C["Common finding contract: finding_id, severity, provenance, impacted_flow"]
+    subgraph L3["Layer 3: Architecture Synthesis"]
+        R["security-architecture-review"]
+    end
 
-    SO --> R["security-architecture-review"]
-    DO --> R
-    EO --> R
-    EH --> R
-    C --> R
+    subgraph L4["Layer 4: Outputs and Lifecycle"]
+        O["security-architecture-review.md"]
+        P["security-product-requirements.md (SPR backlog + delta)"]
+        FB["Feedback scope: missing evidence, boundary gaps, flow-specific follow-up"]
+    end
 
-    R --> FB["Feedback plan: missing evidence, boundary gaps, target flows, rule/probe updates"]
-    FB --> S
-    FB --> D
-    FB --> E
+    S -->|required| N
+    D -->|required| N
+    E -->|required| N
+    E -.->|optional enrichment| EH["external-analysis-architecture-handoff.md"]
 
-    R --> O["security-architecture-review.md: DFD, Attack Flow, Scenario Table, Imported Findings Mapping, Confidence and Gaps"]
-    R --> P["security-product-requirements.md: requirement backlog and lifecycle state"]
+    N -->|required| R
+    EH -.->|optional enrichment| R
+
+    R -->|required| O
+    R <--> |continuous requirement lifecycle| P
+
+    O -->|gap-based follow-up| FB
+    P -->|SPR-driven priorities| FB
+
+    FB -.->|targeted re-scan| S
+    FB -.->|targeted re-scan| D
+    FB -.->|targeted re-analysis| E
 
     classDef static fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20;
     classDef runtime fill:#fff3e0,stroke:#ef6c00,color:#e65100;
@@ -57,11 +68,11 @@ flowchart LR
     classDef artifact fill:#f5f5f5,stroke:#616161,color:#212121;
     classDef feedback fill:#e0f2f1,stroke:#00695c,color:#004d40;
 
-    class S,SO static;
-    class D,DO runtime;
-    class E,EO,EH external;
+    class S static;
+    class D runtime;
+    class E,EH external;
+    class N contract;
     class R review;
-    class C contract;
     class O,P artifact;
     class FB feedback;
 ```
@@ -71,8 +82,11 @@ Legend:
 - Orange: runtime producer flow
 - Blue: external producer flow
 - Yellow: architecture synthesis
-- Gray: common contract/artifacts
+- Gray: contract normalization and artifacts
 - Teal: feedback loop to producers
+- Solid arrow: required handoff
+- Dashed arrow: optional enrichment or iterative feedback
+- Double arrow: continuous lifecycle synchronization
 
 ## Handoff Contract (Why It Matters)
 

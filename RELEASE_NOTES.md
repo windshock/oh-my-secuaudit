@@ -15,6 +15,7 @@
 ### Changed
 - `README.md` now includes a developer workflow section that connects local checks, CI checks, and release guidance.
 - `ROADMAP.md` realigned to a Level 2 plan (examples-first, `--with-examples` schema validation, minimal CI expansion, explicit out-of-scope).
+- `README.md` End-to-End Relationship Map redesigned into 4 layers (producer -> normalize -> synthesis -> lifecycle) with explicit line semantics (required/optional/continuous).
 
 ## 2026-03-03 - v0.4.0
 
