@@ -1,0 +1,17 @@
+rules:
+  - id: java-file-delete-userpath
+    languages: [java]
+    message: "File delete operation may use user-controlled path. Validate and restrict paths before deletion."
+    severity: ERROR
+    patterns:
+      - pattern-either:
+          - pattern: new java.io.File($P).delete()
+          - pattern: new java.io.File($P).deleteOnExit()
+          - pattern: java.nio.file.Files.delete($P)
+          - pattern: java.nio.file.Files.deleteIfExists($P)
+    metadata:
+      cwe: "CWE-73"
+      owasp: "A01:2021 Broken Access Control"
+      category: "File Handling"
+      likelihood: "medium"
+      confidence: "low"

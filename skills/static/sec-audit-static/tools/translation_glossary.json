@@ -1,0 +1,22 @@
+{
+  "Persistent XSS": "Persistent XSS",
+  "Reflected XSS": "Reflected XSS",
+  "DOM-based XSS": "DOM 기반 XSS",
+  "API error message rendered with v-html in dialog": "API 오류 메시지가 대화상자에서 v-html로 렌더링됨",
+  "Manual ad preview injects server-supplied HTML into iframe": "수동 광고 미리보기에서 서버 제공 HTML이 iframe에 삽입됨",
+  "Ad preview uses v-html for creative content": "광고 미리보기에서 크리에이티브 콘텐츠를 v-html로 렌더링함",
+  "renders": "렌더링함",
+  "rendered": "렌더링됨",
+  "render": "렌더링",
+  "server-supplied": "서버 제공",
+  "error message": "오류 메시지",
+  "dialog": "대화상자",
+  "preview": "미리보기",
+  "injects": "삽입함",
+  "iframe": "iframe",
+  "unsanitized": "미정제",
+  "sanitization": "정제",
+  "sanitize": "정제",
+  "user input": "사용자 입력",
+  "v-html": "v-html"
+}

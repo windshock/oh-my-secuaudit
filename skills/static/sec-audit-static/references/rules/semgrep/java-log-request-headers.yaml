@@ -1,0 +1,19 @@
+rules:
+  - id: java-log-request-headers
+    languages: [java]
+    message: "Logging HTTP request headers may expose sensitive data. Avoid logging headers or redact sensitive keys."
+    severity: WARNING
+    patterns:
+      - pattern-either:
+          - pattern: $LOG.$M($REQ.getHeader($H))
+          - pattern: $LOG.$M($REQ.getHeaderNames())
+          - pattern: $LOG.$M($REQ.getHeaders($H))
+      - metavariable-regex:
+          metavariable: $M
+          regex: "(?i)^(trace|debug|info|warn|error)$"
+    metadata:
+      cwe: "CWE-532"
+      owasp: "A09:2021 Security Logging and Monitoring Failures"
+      category: "Information Exposure"
+      likelihood: "medium"
+      confidence: "low"

@@ -1,0 +1,11 @@
+rules:
+  - id: java-log-request-params
+    languages: [java]
+    message: "Request parameters are logged; may expose sensitive data in logs."
+    severity: WARNING
+    patterns:
+      - pattern: |
+          $LOG.$M(..., $REQ.getParameter($P));
+    metadata:
+      category: security
+      cwe: "CWE-532"

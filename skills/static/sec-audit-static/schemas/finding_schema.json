@@ -1,0 +1,185 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Security Finding Schema",
+  "description": "취약점 보고서 JSON 스키마",
+  "type": "object",
+  "required": ["task_id", "status", "findings", "metadata"],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "description": "작업 ID",
+      "pattern": "^[0-9]+-[0-9]+$"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["completed", "failed", "partial"]
+    },
+    "findings": {
+      "type": "array",
+      "description": "발견된 취약점 목록",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "severity", "category", "description", "request_mapping", "flow", "layer", "boundary", "sink_class"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "취약점 고유 ID (예: VULN-001)"
+          },
+          "title": {
+            "type": "string",
+            "description": "취약점 제목"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["Critical", "High", "Medium", "Low", "Info"],
+            "description": "심각도"
+          },
+          "category": {
+            "type": "string",
+            "description": "취약점 분류 (예: SQL Injection, XSS, File Upload)"
+          },
+          "description": {
+            "type": "string",
+            "description": "취약점 상세 설명"
+          },
+          "affected_endpoint": {
+            "type": "string",
+            "description": "영향받는 API 엔드포인트"
+          },
+          "affected_file": {
+            "type": "string",
+            "description": "취약점이 존재하는 소스 파일 경로:라인"
+          },
+          "evidence": {
+            "type": "string",
+            "description": "취약점 근거 (코드 스니펫 등)"
+          },
+          "recommendation": {
+            "type": "string",
+            "description": "조치 권고"
+          },
+          "cwe_id": {
+            "type": "string",
+            "description": "CWE ID (예: CWE-89)",
+            "pattern": "^CWE-[0-9]+$"
+          },
+          "owasp_category": {
+            "type": "string",
+            "description": "OWASP Top 10 분류"
+          },
+          "request_mapping": {
+            "type": "string",
+            "description": "요청 매핑 (예: /api/foo)",
+            "minLength": 1
+          },
+          "flow": {
+            "type": "array",
+            "description": "입력/코드 흐름 단계",
+            "items": { "type": "string" },
+            "minItems": 1
+          },
+          "layer": {
+            "type": "string",
+            "enum": ["controller", "service", "dao", "util", "unknown_layer"],
+            "description": "코드 레이어 분류"
+          },
+          "boundary": {
+            "type": "string",
+            "enum": ["external", "network", "file", "deserialization", "unknown_boundary"],
+            "description": "경계/입력 유형"
+          },
+          "sink_class": {
+            "type": "string",
+            "enum": ["exec", "eval", "sql", "fs", "net", "deserialize", "unknown_sink_class"],
+            "description": "싱크 유형"
+          },
+          "unknown_reason": {
+            "type": "string",
+            "enum": [
+              "unknown_no_edges",
+              "unknown_dynamic_dispatch",
+              "unknown_context_budget",
+              "unknown_needs_runtime",
+              "unknown_tooling_error",
+              "indeterminate_policy",
+              "benign_unreachable"
+            ],
+            "description": "확인 불가 사유 (taxonomy)"
+          }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "description": "요약 통계",
+      "properties": {
+        "total": { "type": "integer" },
+        "critical": { "type": "integer" },
+        "high": { "type": "integer" },
+        "medium": { "type": "integer" },
+        "low": { "type": "integer" },
+        "info": { "type": "integer" }
+      }
+    },
+    "executed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "claude_session": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string",
+      "description": "추가 메모"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "작업 메타데이터",
+      "required": ["source_repo_url", "source_repo_path", "source_modules", "state_store_run_id", "snapshot_scope"],
+      "additionalProperties": true,
+      "properties": {
+        "source_repo_url": {
+          "type": "string",
+          "description": "진단 대상 레포 URL (예: http://.../repos/pcona/)"
+        },
+        "source_repo_path": {
+          "type": "string",
+          "description": "로컬 레포 경로 (예: /Users/.../Downloads/pcona-src)"
+        },
+        "source_modules": {
+          "type": "array",
+          "description": "진단 대상 모듈/서브프로젝트 목록",
+          "minItems": 1,
+          "items": { "type": "string" }
+        },
+        "source_label": {
+          "type": "string",
+          "description": "보고서에 표시할 소스 경로/URL 라벨"
+        },
+        "report_wiki_url": {
+          "type": "string",
+          "description": "배포된 위키 보고서 URL"
+        },
+        "report_wiki_page_id": {
+          "type": "string",
+          "description": "위키 페이지 ID"
+        },
+        "report_wiki_status": {
+          "type": "string",
+          "description": "위키 보고서 배포 상태",
+          "enum": ["not_published", "published", "failed", "partial"]
+        },
+        "state_store_run_id": {
+          "type": "string",
+          "description": "State Store 실행 식별자"
+        },
+        "snapshot_scope": {
+          "type": "string",
+          "description": "스냅샷 범위",
+          "enum": ["module", "repo", "decompiled-module", "decompiled-repo"]
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,30 @@
+rules:
+  - id: java-controller-postmapping-no-auth
+    message: "Controller POST endpoint lacks explicit authorization annotations; verify auth/signature/replay protections."
+    severity: WARNING
+    languages: [java]
+    metadata:
+      cwe: CWE-306
+      owasp: A01:2021 Broken Access Control
+      category: security
+      confidence: low
+    patterns:
+      - pattern-inside: |
+          @Controller
+          public class $C {
+            ...
+          }
+      - pattern-either:
+          - pattern: |
+              @PostMapping(...)
+              public $RET $FUNC(...) {
+                ...
+              }
+          - pattern: |
+              @RequestMapping(..., method = RequestMethod.POST, ...)
+              public $RET $FUNC(...) {
+                ...
+              }
+      - pattern-not: "@PreAuthorize(...)"
+      - pattern-not: "@Secured(...)"
+      - pattern-not: "@RolesAllowed(...)"

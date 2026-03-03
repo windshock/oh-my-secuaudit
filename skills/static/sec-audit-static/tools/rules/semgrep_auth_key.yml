@@ -1,0 +1,65 @@
+rules:
+  - id: auth_bypass_certification_false
+    languages: [kotlin, java]
+    severity: ERROR
+    message: "@Certification(false) on controller/service – potential auth bypass"
+    patterns:
+      - pattern: |
+          @Certification(false)
+          class $CLASS { ... }
+    metadata:
+      category: auth_bypass
+      cwe: "CWE-287"
+
+  - id: auth_bypass_command_exception
+    languages: [kotlin, java]
+    severity: WARNING
+    message: "Auth check skipped for specific commands (authKey proc) – verify whitelist"
+    patterns:
+      - pattern: |
+          if ($CMD == ControllerConst.$CONST || ...) { return true; }
+    metadata:
+      category: auth_bypass
+      cwe: "CWE-287"
+
+  - id: authkey_long_ttl
+    languages: [kotlin, java]
+    severity: WARNING
+    message: "AuthKey TTL > 24h (e.g., getDatewithGap(50)) – reduce expiry"
+    patterns:
+      - pattern: |
+          TimeUtil.getDatewithGap("DATE", $DAYS)
+    metavariables:
+      DAYS:
+        metavariable-pattern: (50|[3-9][0-9]|[1-9][0-9]{2,})
+    metadata:
+      category: session_management
+      cwe: "CWE-613"
+
+  - id: sensitive_response_putall
+    languages: [kotlin, java]
+    severity: ERROR
+    message: "Sensitive data merged into response without auth filtering"
+    patterns:
+      - pattern: |
+          $RESP.putAll($EXTERNAL)
+    metadata:
+      category: data_exposure
+      cwe: "CWE-200"
+
+  - id: sensitive_fields_in_response
+    languages: [kotlin, java]
+    severity: ERROR
+    message: "Sensitive fields (key/secret/token/mdn/memberId/ci/birthday) included in response"
+    patterns:
+      - pattern: |
+          $RESP.put($KEY, $VAL)
+    metavariables:
+      KEY:
+        metavariable-regex: "(?i)(key|secret|token|auth|memberId|mdn|ci|birthday)"
+    metadata:
+      category: data_exposure
+      cwe: "CWE-200"
+
+  # Removed noisy logging rule that was failing to parse on Kotlin; will reintroduce with
+  # validated pattern-regex in a later revision.

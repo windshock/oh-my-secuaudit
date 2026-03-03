@@ -1,0 +1,34 @@
+rules:
+  - id: ocb-file-delete-unrestricted
+    languages: [java]
+    message: "Potential unrestricted file deletion via user-controlled path"
+    severity: ERROR
+    patterns:
+      - pattern: new File($PATH).delete()
+    metadata:
+      category: security
+      confidence: MEDIUM
+      owasp: "A05:2021 - Security Misconfiguration"
+      cwe: "CWE-22"
+
+  - id: ocb-hardcoded-secrets-properties
+    languages: [generic]
+    message: "Potential hardcoded secret in properties file"
+    severity: WARNING
+    pattern-regex: '(?i)^(?!#).*?(password|passwd|secret|token|api[_-]?key|openai\.api\.key|jwt\.secret\.key|webhook).*?=.+$'
+    paths:
+      include:
+        - "**/src/main/resources/**/*.properties"
+        - "**/src/test/resources/**/*.properties"
+        - "**/decompiled/**/*.properties"
+
+  - id: ocb-ordering-sql-injection
+    languages: [kotlin, java]
+    message: "Potential SQL injection via unvalidated ORDER BY direction"
+    severity: ERROR
+    pattern-regex: '(?is)order\\s+by[\\s\\S]*\\$\\{\\s*ordering\\s*\\}'
+    paths:
+      include:
+        - "**/src/main/java/**/*.kt"
+        - "**/decompiled/**/*.java"
+        - "**/decompiled/**/*.kt"

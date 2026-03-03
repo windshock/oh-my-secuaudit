@@ -1,0 +1,22 @@
+stages:
+  - audit
+
+audit:
+  stage: audit
+  image: python:3.11
+  script:
+    - pip install semgrep==1.136.0
+    - chmod +x tools/scripts/run_static_audit.sh tools/scripts/ci_contract.sh tools/scripts/lint_plan_vs_impl.sh
+    - tools/scripts/run_static_audit.sh --repo "$CI_PROJECT_DIR/appif5" --state-dir "$CI_PROJECT_DIR/appif5/state" --run-label "$(date +%Y%m%d)-appif5-module" --snapshot-scope module --skip-decompiled --override-reason ci
+    - tools/scripts/lint_plan_vs_impl.sh
+    - tools/scripts/ci_contract.sh "$CI_PROJECT_DIR/appif5/state/audit_summary.json"
+  artifacts:
+    when: always
+    paths:
+      - appif5/state/finding_report.md
+      - appif5/state/audit_summary.json
+      - appif5/state/fuzz_queue.json
+      - appif5/state/coverage_*.json
+  only:
+    - merge_requests
+    - main

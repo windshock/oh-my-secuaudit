@@ -1,0 +1,15 @@
+rules:
+  - id: gifticon-logging-sensitive-identifiers
+    languages: [java]
+    severity: WARNING
+    message: "Logging of sensitive coupon/order identifiers (couponNo/cpcoId/st11OrdNo/trsNo)"
+    patterns:
+      - pattern-either:
+          - pattern: $LOG.$METHOD(... + $VAR + ...)
+          - pattern: $LOG.$METHOD(... + $VAR)
+      - metavariable-regex:
+          metavariable: $VAR
+          regex: "(couponNo|cpcoId|cpcoProdId|st11OrdNo|trsNo)"
+    metadata:
+      category: data-protection
+      technology: java

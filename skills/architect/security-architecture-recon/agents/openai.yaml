@@ -1,0 +1,4 @@
+interface:
+  display_name: "Security Architecture Recon"
+  short_description: "Reconstruct security architecture and attack surface from code"
+  default_prompt: "Reconstruct security architecture from this codebase: produce attack surface inventory, DFD, sensitive data map, trust boundaries, risk summary, and SAST rule candidates."

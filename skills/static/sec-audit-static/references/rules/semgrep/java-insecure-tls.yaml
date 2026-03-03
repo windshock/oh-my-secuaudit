@@ -1,0 +1,31 @@
+rules:
+  - id: java-insecure-tls-hostname-verifier
+    languages: [java]
+    message: "Hostname verification disabled for HTTPS connections."
+    severity: ERROR
+    patterns:
+      - pattern: |
+          HttpsURLConnection.setDefaultHostnameVerifier(($X) -> true);
+    metadata:
+      category: security
+      cwe: "CWE-295"
+
+  - id: java-insecure-tls-trust-all
+    languages: [java]
+    message: "Custom TrustManager accepts all certificates."
+    severity: ERROR
+    patterns:
+      - pattern: |
+          class $C implements TrustManager, X509TrustManager {
+            ...
+            public boolean isServerTrusted($T $A) {
+              return true;
+            }
+            ...
+            public void checkServerTrusted($T2 $A2, String $S) {
+            }
+            ...
+          }
+    metadata:
+      category: security
+      cwe: "CWE-295"

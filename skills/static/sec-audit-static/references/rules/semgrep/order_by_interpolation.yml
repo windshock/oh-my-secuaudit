@@ -1,0 +1,12 @@
+rules:
+  - id: sql-order-by-interpolation
+    message: "Potential SQL injection via ORDER BY interpolation"
+    severity: ERROR
+    languages: [kotlin]
+    pattern: |
+      end ${$ORDERING}
+    metadata:
+      category: security
+      cwe: "CWE-89"
+      owasp: "A03:2021 Injection"
+      confidence: HIGH

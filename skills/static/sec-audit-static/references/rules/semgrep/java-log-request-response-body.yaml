@@ -1,0 +1,15 @@
+rules:
+  - id: java-log-request-or-response-body
+    message: "Logging full request/response bodies can expose sensitive data in logs."
+    severity: WARNING
+    languages: [java]
+    metadata:
+      cwe: CWE-532
+      owasp: "A09:2021 Security Logging and Monitoring Failures"
+      category: security
+      confidence: high
+    pattern-either:
+      - pattern: |
+          $LOGGER.$LEVEL("Request Body :: {}", $BODY)
+      - pattern: |
+          $LOGGER.$LEVEL("Response body :: {}", $BODY)

@@ -1,0 +1,12 @@
+rules:
+  - id: cors-reflect-origin
+    message: "CORS configuration reflects request Origin in allowedOrigins"
+    severity: ERROR
+    languages: [kotlin, java]
+    patterns:
+      - pattern: $CONFIG.addAllowedOrigin($REQ.getHeader("Origin"))
+    metadata:
+      category: security
+      cwe: "CWE-942"
+      owasp: "A05:2021 Security Misconfiguration"
+      confidence: HIGH

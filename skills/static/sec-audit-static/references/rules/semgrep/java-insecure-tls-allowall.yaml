@@ -1,0 +1,55 @@
+rules:
+  - id: java-insecure-tls-allow-all-hostname-verifier
+    languages: [java]
+    message: "Hostname verification is disabled (ALLOW_ALL_HOSTNAME_VERIFIER)."
+    severity: ERROR
+    patterns:
+      - pattern: |
+          $SF.setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+    metadata:
+      category: security
+      cwe: "CWE-295"
+
+  - id: java-insecure-tls-custom-hostname-verifier
+    languages: [java]
+    message: "Custom HostnameVerifier returns true for all hosts."
+    severity: ERROR
+    patterns:
+      - pattern: |
+          public boolean verify(String $HOST, SSLSession $SESSION) {
+            return true;
+          }
+      - pattern-inside: |
+          class $C implements HostnameVerifier {
+            ...
+          }
+    metadata:
+      category: security
+      cwe: "CWE-295"
+
+  - id: java-insecure-tls-trustmanager-empty-check
+    languages: [java]
+    message: "Custom X509TrustManager disables certificate validation."
+    severity: ERROR
+    patterns:
+      - pattern: |
+          new X509TrustManager() {
+            ...
+            public void checkServerTrusted($C, String $S) throws $E {
+            }
+            ...
+          }
+    metadata:
+      category: security
+      cwe: "CWE-295"
+
+  - id: java-insecure-tls-set-default-hostname-verifier
+    languages: [java]
+    message: "Custom HostnameVerifier set globally. Verify it enforces validation."
+    severity: WARNING
+    patterns:
+      - pattern: |
+          HttpsURLConnection.setDefaultHostnameVerifier($V);
+    metadata:
+      category: security
+      cwe: "CWE-295"

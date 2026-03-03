@@ -1,0 +1,14 @@
+rules:
+  - id: kotlin-sql-orderby-interp
+    languages: [kotlin]
+    message: "Dynamic ORDER BY clause via string interpolation can lead to SQL injection. Use allowlist or parameterized builder."
+    severity: ERROR
+    patterns:
+      - pattern: |
+          """...ORDER BY ${$X}..."""
+    metadata:
+      cwe: "CWE-89"
+      owasp: "A03:2021 Injection"
+      category: "Injection"
+      likelihood: "high"
+      confidence: "low"

@@ -1,0 +1,36 @@
+name: static-audit
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install semgrep (example)
+        run: pip install semgrep==1.136.0
+      - name: Run static audit
+        run: |
+          tools/scripts/run_static_audit.sh \
+            --repo "$PWD/appif5" \
+            --state-dir "$PWD/appif5/state" \
+            --run-label "$(date +%Y%m%d)-appif5-module" \
+            --snapshot-scope module \
+            --skip-decompiled
+      - name: Lint plan vs impl
+        run: tools/scripts/lint_plan_vs_impl.sh
+      - name: Enforce summary contract
+        run: |
+          summary=appif5/state/audit_summary.json
+          fail_count=$(jq -r '.fail_count' "$summary")
+          quarantine=$(jq -r '.quarantine|length' "$summary")
+          if [ "$fail_count" != "0" ] || [ "$quarantine" != "0" ]; then
+            echo "Audit summary indicates failure (fail_count=$fail_count, quarantine=$quarantine)"
+            exit 1
+          fi

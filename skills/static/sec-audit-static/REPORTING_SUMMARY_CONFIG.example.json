@@ -1,0 +1,35 @@
+{
+  "report_id": "2026-02-05-example",
+  "owner": "",
+  "severity_scheme": "grade-5-to-1",
+  "analyses": [
+    {
+      "type": "sec-audit-static",
+      "format": "json",
+      "report_path": "state/final_report.json",
+      "scope": "source code",
+      "notes": "SAST/SCA/secret"
+    },
+    {
+      "type": "sec-audit-dast",
+      "format": "sarif",
+      "report_path": "dast/results.sarif",
+      "scope": "runtime endpoints",
+      "notes": "ASM/DAST"
+    },
+    {
+      "type": "external-software-analysis",
+      "format": "markdown",
+      "report_path": "external/vuln_report_rpapi_jsonio_type_deser.md",
+      "scope": "binary/reverse",
+      "notes": "json-io type deser",
+      "severity_counts": {
+        "critical": 0,
+        "high": 1,
+        "medium": 0,
+        "low": 0,
+        "info": 0
+      }
+    }
+  ]
+}

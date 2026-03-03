@@ -1,0 +1,16 @@
+rules:
+  - id: java-open-redirect-setviewname
+    languages: [java]
+    message: 'Potential open redirect via setViewName("redirect:" + user input).'
+    severity: WARNING
+    patterns:
+      - pattern-either:
+          - pattern: |
+              $MAV.setViewName("redirect:" + $URL);
+          - pattern: |
+              $MAV.setViewName("redirect:" + $URL + $REST);
+          - pattern: |
+              $MAV.setViewName("redirect:" + $URL + $REST + $MORE);
+    metadata:
+      category: security
+      cwe: "CWE-601"

@@ -1,0 +1,19 @@
+rules:
+  - id: vue-xss-unsafe-html
+    message: "Potential XSS: unsafe HTML/JS injection into DOM or iframe."
+    languages: [javascript, typescript, vue]
+    severity: WARNING
+    patterns:
+      - pattern-either:
+          - pattern: document.write($X)
+          - pattern: $OBJ.document.write($X)
+          - pattern: $EL.innerHTML = $X
+          - pattern: $EL.outerHTML = $X
+          - pattern-regex: "\\.document\\.write\\("
+          - pattern-regex: "innerHTML\\s*="
+          - pattern-regex: "v-html=\"[^\"]+\""
+    metadata:
+      category: security
+      cwe: "CWE-79"
+      owasp: "A03:2021-Injection"
+      technology: [vue, javascript]
