@@ -1,0 +1,6 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Local runtime artifacts
+state_store.db
