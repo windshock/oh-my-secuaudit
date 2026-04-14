@@ -1,0 +1,127 @@
+# Bootstrapping Stage 1 Review Checklist (v4 section 5, Step 5)
+
+This checklist is based on Phase 2/3 automated detection results. Each representative sample requires manual review. Per v4: *"Minimum 2 samples per cluster manually reviewed. Split or exclude cluster on problems."*
+
+Mark each item: `[X]` (vulnerable), `[N]` (not vulnerable), `[partial]` (conditional).
+
+---
+
+## C1. Endpoint-level Auth/Authz Gaps
+
+**Candidate scale**: N endpoints / N modules (detail: `c1/auth_enumeration.md`)
+
+### Representative Samples (v4 Step 4 priority: risk > unclear sanitizer > path complexity)
+
+#### C1-s1 (highest risk) — {{Description}}
+- [ ] **`{{Module}}/{{Path}}/{{Controller}}.java`** — `{{HTTP_METHOD}} {{endpoint}}`
+  - Checks:
+    - [ ] Controller-level auth annotation (`@PreAuthorize`, `@Secured`) present?
+    - [ ] WebConfig `addInterceptors()` has Auth/Login interceptor?
+    - [ ] Service-layer signature/HMAC/token verification present?
+    - [ ] Gateway enforcement evidence (operational, not code)?
+  - Verdict:
+    - [ ] Vulnerable (code-level controls: 0)
+    - [ ] Not vulnerable
+    - [ ] Partial — operational evidence pending
+
+#### C1-s2 (largest scale) — {{Description}}
+- [ ] **`{{Module}}/{{Path}}/{{Controller}}.java`** — N endpoints
+  - Checks: (same as C1-s1)
+  - **Confusion prevention note**: `AuthenticationService`/`authNo` names may exist but serve a different purpose (e.g., recipient verification, not API caller auth). Always verify auth layer (caller vs recipient vs session).
+  - Verdict:
+    - [ ] Vulnerable
+    - [ ] Not vulnerable
+    - [ ] Partial
+
+---
+
+## C2. Hardcoded Shared-Secret
+
+**Candidate scale**: N endpoints / N modules
+
+#### C2-s1 — {{Description}}
+- [ ] **`{{Path}}`** — `{{endpoint}}`
+  - Checks:
+    - [ ] Shared secret in source code (constant field)?
+    - [ ] Same secret across environments (dev/staging/prod)?
+    - [ ] Failure path allows bypass (returns true on mismatch)?
+  - Verdict:
+    - [ ] Vulnerable
+    - [ ] Not vulnerable
+
+---
+
+## C3. SSL/Hostname Verification Bypass
+
+**Candidate scale**: N sites / N modules
+
+#### C3-s1 — {{Description}}
+- [ ] **`{{Path}}`**
+  - Checks:
+    - [ ] `HostnameVerifier` returns true unconditionally?
+    - [ ] `X509TrustManager.checkServerTrusted` is empty?
+    - [ ] `ALLOW_ALL_HOSTNAME_VERIFIER` constant used?
+    - [ ] Applied to production HTTPS connections (not test-only)?
+  - Verdict:
+    - [ ] Vulnerable
+    - [ ] Not vulnerable (test-only)
+
+---
+
+## C4. Sensitive Data Logging
+
+**Candidate scale**: N matches / N modules
+
+#### C4-s1 — {{Description}}
+- [ ] **`{{Path}}`**
+  - Checks:
+    - [ ] PII/credential fields logged without masking?
+    - [ ] Full request/response object logged?
+    - [ ] Authorization header logged in plain text?
+    - [ ] Log output accessible to unauthorized parties?
+  - Verdict:
+    - [ ] Vulnerable
+    - [ ] Not vulnerable (masked)
+
+---
+
+## C5. Unsafe Deserialization (XML/XStream/XXE)
+
+**Candidate scale**: N sites / N modules
+
+#### C5-s1 — {{Description}}
+- [ ] **`{{Path}}`**
+  - Checks:
+    - [ ] `XStream` instantiated without `setupDefaultSecurity`?
+    - [ ] `allowTypes`/`allowTypesByWildcard` absent?
+    - [ ] `DocumentBuilderFactory` without disallow-doctype-decl?
+    - [ ] Reachable from external input without auth? (C1 x C5 chain?)
+  - Verdict:
+    - [ ] Vulnerable
+    - [ ] Not vulnerable (hardened)
+    - [ ] **Critical** (C1 x C5 cross-cluster chain)
+
+---
+
+## Summary
+
+| Cluster | Samples Reviewed | Consistent | Inconsistent | Consistency Rate | Stage |
+|---|---:|---:|---:|---|---|
+| C1 | | | | | Stage 1 |
+| C2 | | | | | Stage 1 |
+| C3 | | | | | Stage 1 |
+| C4 | | | | | Stage 1 |
+| C5 | | | | | Stage 1 |
+
+### Cross-Cluster Findings
+
+| Interaction | Severity | Description |
+|---|---|---|
+| C1 x C5 | Critical | Auth gap + unsafe deserialization = RCE chain potential |
+| C1 x C4 | High | Auth gap amplifies data leak through logs |
+
+### Bootstrapping Judgment
+
+- Clusters ready for Stage 2 (consistency >= 80%): _none yet_
+- Clusters requiring split: _TBD after review_
+- Clusters requiring exclusion: _TBD after review_

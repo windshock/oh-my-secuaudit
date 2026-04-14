@@ -1,0 +1,74 @@
+rules:
+  - id: hostname-verifier-lambda-allow-all
+    languages: [java]
+    severity: ERROR
+    message: |
+      Hostname verification bypass via lambda always returning true.
+      Cluster C3: Trust boundary / unsafe consumption.
+      Allows MITM on HTTPS calls. Remove and rely on default JSSE verification.
+    patterns:
+      - pattern-either:
+          - pattern: HttpsURLConnection.setDefaultHostnameVerifier((..., ...) -> true)
+          - pattern: $X.setHostnameVerifier((..., ...) -> true)
+    metadata:
+      cluster: C3
+      category: trust-boundary
+      technology: java
+
+  - id: hostname-verifier-named-class-allow-all
+    languages: [java]
+    severity: ERROR
+    message: |
+      HostnameVerifier implementation that unconditionally returns true. Cluster C3.
+    patterns:
+      - pattern: |
+          public boolean verify(String $A, SSLSession $B) {
+            ...
+            return true;
+            ...
+          }
+    metadata:
+      cluster: C3
+      category: trust-boundary
+      technology: java
+
+  - id: trust-manager-no-validation
+    languages: [java]
+    severity: ERROR
+    message: |
+      X509TrustManager with empty checkServerTrusted/checkClientTrusted.
+      Cluster C3: Trust-all behavior. Replace with default JSSE trust store or explicit pinning.
+    patterns:
+      - pattern-either:
+          - pattern: |
+              public void checkServerTrusted(X509Certificate[] $A, String $B) throws CertificateException {
+                return;
+              }
+          - pattern: |
+              public void checkServerTrusted(X509Certificate[] $A, String $B) throws CertificateException {
+              }
+          - pattern: |
+              public void checkClientTrusted(X509Certificate[] $A, String $B) throws CertificateException {
+                return;
+              }
+          - pattern: |
+              public void checkClientTrusted(X509Certificate[] $A, String $B) throws CertificateException {
+              }
+    metadata:
+      cluster: C3
+      category: trust-boundary
+      technology: java
+
+  - id: allow-all-hostname-verifier-constant
+    languages: [java]
+    severity: ERROR
+    message: |
+      Legacy ALLOW_ALL_HOSTNAME_VERIFIER constant. Cluster C3.
+    patterns:
+      - pattern-either:
+          - pattern: SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER
+          - pattern: $X.ALLOW_ALL_HOSTNAME_VERIFIER
+    metadata:
+      cluster: C3
+      category: trust-boundary
+      technology: java

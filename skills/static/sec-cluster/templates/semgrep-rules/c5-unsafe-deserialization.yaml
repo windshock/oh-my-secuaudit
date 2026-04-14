@@ -1,0 +1,99 @@
+rules:
+  - id: xstream-no-default-security
+    languages: [java]
+    severity: ERROR
+    message: |
+      XStream instantiation without setupDefaultSecurity or allowTypes/allowTypesByWildcard.
+      Cluster C5: Trust boundary / unsafe deserialization.
+      Apply: XStream.setupDefaultSecurity(xs); xs.allowTypes(new Class[]{...});
+    patterns:
+      - pattern-either:
+          - pattern: new XStream(...)
+          - pattern: new XStream()
+    metadata:
+      cluster: C5
+      category: trust-boundary
+      technology: java
+      triage_hint: |
+        Check same class/file for:
+          - XStream.setupDefaultSecurity(...)
+          - $X.allowTypes(...)
+          - $X.allowTypesByWildcard(...)
+          - $X.allowTypeHierarchy(...)
+        If present, partially mitigated — re-classify.
+
+  - id: xstream-fromxml-direct
+    languages: [java]
+    severity: WARNING
+    message: |
+      Direct XStream.fromXML() on external input. Cluster C5.
+      Verify allowTypes restriction on the same XStream instance.
+    patterns:
+      - pattern-either:
+          - pattern: $XS.fromXML($INPUT)
+          - pattern: XStream.fromXML($INPUT)
+    metadata:
+      cluster: C5
+      category: trust-boundary
+      technology: java
+
+  - id: documentbuilderfactory-no-hardening
+    languages: [java]
+    severity: ERROR
+    message: |
+      DocumentBuilderFactory without XXE hardening flags. Cluster C5.
+      Required: setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
+    patterns:
+      - pattern-either:
+          - pattern: DocumentBuilderFactory.newInstance()
+          - pattern: DocumentBuilderFactory.newDefaultInstance()
+    metadata:
+      cluster: C5
+      category: trust-boundary
+      technology: java
+      triage_hint: |
+        Same file should have:
+          $DBF.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
+          $DBF.setFeature("http://apache.org/xml/features/external-general-entities", false)
+          $DBF.setFeature("http://apache.org/xml/features/external-parameter-entities", false)
+
+  - id: saxparserfactory-no-hardening
+    languages: [java]
+    severity: ERROR
+    message: |
+      SAXParserFactory without XXE hardening flags. Cluster C5.
+    patterns:
+      - pattern: SAXParserFactory.newInstance()
+    metadata:
+      cluster: C5
+      category: trust-boundary
+      technology: java
+
+  - id: xmlinputfactory-no-hardening
+    languages: [java]
+    severity: ERROR
+    message: |
+      XMLInputFactory without XXE hardening flags. Cluster C5.
+    patterns:
+      - pattern: XMLInputFactory.newInstance()
+    metadata:
+      cluster: C5
+      category: trust-boundary
+      technology: java
+
+  - id: documentbuilder-parse-on-input
+    languages: [java]
+    severity: WARNING
+    message: |
+      DocumentBuilder.parse() invoked. Cluster C5. Confirm the producing
+      DocumentBuilderFactory was hardened against XXE.
+    patterns:
+      - pattern-either:
+          - pattern: |
+              Document $DOC = $DB.parse($INPUT);
+          - pattern: |
+              org.w3c.dom.Document $DOC = $DB.parse($INPUT);
+    metadata:
+      cluster: C5
+      category: trust-boundary
+      technology: java

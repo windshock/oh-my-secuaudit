@@ -11,12 +11,31 @@
   - `.github/workflows/ci.yml` (runs validation on `push`/`pull_request`)
 - Release operating guide:
   - `.github/RELEASE_GUIDE.md`
+- New skill: `skills/static/sec-cluster` — dataflow-based security code clustering (v4 strategy):
+  - `SKILL.md` with full 6-phase workflow
+  - `references/clustering_strategy_v4.md` — strategy reference document
+  - `templates/semgrep-rules/` — 4 category rule templates (C2 shared-secret, C3 hostname-bypass, C4 sensitive-logging, C5 unsafe-deserialization)
+  - `templates/sweep.sh` — module sweep runner
+  - `templates/auth_enum.sh` — C1 auth mechanism enumeration helper
+  - `templates/CLUSTERS.md.tmpl` — cluster document template
+  - `templates/REVIEW_CHECKLIST.md.tmpl` — bootstrapping review checklist template
+- New skill: `skills/methodology/security-testing-as-code` — assessment-as-executable-project workflow:
+  - `SKILL.md` with project structure, PoC standards, handoff plan workflow
+  - `references/project_structure.md` — directory layout reference
+  - `references/poc_standards.md` — PoC quality and safety guidelines
+  - `templates/assessment/` — starter project template (copy to begin new assessment)
+  - `templates/finding.json` — finding record template
+  - `templates/poc-readme.md` — PoC README template
+  - `templates/handoff-plan.md` — handoff plan template
 
 ### Changed
 - `README.md` now includes a developer workflow section that connects local checks, CI checks, and release guidance.
-- `ROADMAP.md` realigned to a Level 2 plan (examples-first, `--with-examples` schema validation, minimal CI expansion, explicit out-of-scope).
+- `README.md` updated with Claude Code setup guide alongside existing Codex instructions.
+- `README.md` capability matrix expanded with `sec-cluster` and `security-testing-as-code` entries.
 - `README.md` End-to-End Relationship Map redesigned into 4 layers (producer -> normalize -> synthesis -> lifecycle) with explicit line semantics (required/optional/continuous).
+- `README.md` Relationship Map now includes `sec-cluster` (Layer 1) and `security-testing-as-code` (Layer M: Methodology) nodes.
 - `README.md` Relationship Map now includes manual external threat research as a first-class context input and feedback target.
+- `scripts/validate_skills_repo.py` updated to validate new skill directories.
 - Removed case-derived vulnerability intake example set from docs and references to keep guidance fully generic.
 
 ## 2026-03-03 - v0.4.0

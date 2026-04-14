@@ -1,0 +1,87 @@
+rules:
+  - id: logging-sensitive-identifiers
+    languages: [java]
+    severity: WARNING
+    message: |
+      Logging of sensitive identifiers. Cluster C4-a: Data protection.
+      Apply field-level masking before log call.
+    patterns:
+      - pattern-either:
+          - pattern: $LOG.$METHOD(... + $VAR + ...)
+          - pattern: $LOG.$METHOD(... + $VAR)
+          - pattern: $LOG.$METHOD("...", $VAR, ...)
+          - pattern: $LOG.$METHOD("...", $VAR)
+      - metavariable-regex:
+          metavariable: $VAR
+          # Adapt: replace with project-specific sensitive field names
+          regex: "(userId|accountNo|cardNo|ssn|password|token|secret|phoneNo|email)"
+      - metavariable-regex:
+          metavariable: $METHOD
+          regex: "(info|debug|warn|error|trace)"
+    metadata:
+      cluster: C4-a
+      category: data-protection
+      technology: java
+      adapt_guidance: |
+        Replace the $VAR regex with your codebase's sensitive field names.
+        Common patterns: order IDs, coupon numbers, partner IDs, card numbers,
+        phone numbers, SSNs, authentication tokens.
+
+  - id: request-body-advice-after-body-read
+    languages: [java]
+    severity: WARNING
+    message: |
+      `afterBodyRead` override (RequestBodyAdvice). Cluster C4-b.
+      Confirm body is not logged or is masked before logging.
+    patterns:
+      - pattern: |
+          public Object afterBodyRead(Object $BODY, ...) {
+            ...
+          }
+    metadata:
+      cluster: C4-b
+      category: data-protection
+      technology: java
+
+  - id: authorization-header-logged
+    languages: [java]
+    severity: ERROR
+    message: |
+      Authorization header (Basic/Bearer credential) appears in log output.
+      Cluster C4-c. Mask or strip before logging — credential leak risk.
+    patterns:
+      - pattern-either:
+          - pattern: $LOG.$METHOD(..., $X, ...)
+      - metavariable-regex:
+          metavariable: $X
+          regex: ".*[Aa]uthorization.*"
+      - metavariable-regex:
+          metavariable: $METHOD
+          regex: "(info|debug|warn|error|trace)"
+    metadata:
+      cluster: C4-c
+      category: data-protection
+      technology: java
+
+  - id: logging-whole-request-object
+    languages: [java]
+    severity: WARNING
+    message: |
+      Logging entire request/response object or parameter map. Cluster C4-b.
+      Replace with field-level redacted logging.
+    patterns:
+      - pattern-either:
+          - pattern: $LOG.$METHOD(..., $REQ)
+          - pattern: $LOG.$METHOD(... + $REQ.toString() + ...)
+          - pattern: $LOG.$METHOD(... + $REQ.toString())
+          - pattern: $LOG.$METHOD($REQ.toString())
+      - metavariable-regex:
+          metavariable: $REQ
+          regex: ".*([Rr]equest$|paramMap|[Pp]aramMap)"
+      - metavariable-regex:
+          metavariable: $METHOD
+          regex: "(info|debug|warn|error|trace)"
+    metadata:
+      cluster: C4-b
+      category: data-protection
+      technology: java

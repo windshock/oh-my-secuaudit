@@ -1,0 +1,22 @@
+{
+  "id": "FINDING-NNN",
+  "title": "",
+  "severity": "Critical|High|Medium|Low|Info",
+  "category": "",
+  "description": "",
+  "provenance": "source-confirmed|binary-confirmed|runtime-confirmed|not-confirmed",
+  "impacted_flow": ["F1"],
+  "evidence_path": "artifacts/poc/FINDING-NNN/",
+  "runtime_evidence_path": "artifacts/runtime/requests/finding-NNN.http",
+  "status": "confirmed|suspected|false-positive|remediated",
+  "cwe_id": "",
+  "affected_component": "",
+  "affected_endpoint": "",
+  "remediation": "",
+  "target_state": {
+    "commit": "",
+    "version": "",
+    "snapshot_date": ""
+  },
+  "notes": ""
+}

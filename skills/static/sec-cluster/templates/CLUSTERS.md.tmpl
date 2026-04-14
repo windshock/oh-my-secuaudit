@@ -1,0 +1,97 @@
+# {{PROJECT_NAME}} Security Code Clustering (v4)
+
+This document applies the **(Endpoint, Sink) dataflow-based clustering strategy v4** to the {{PROJECT_NAME}} codebase. It complements the existing architecture review by regrouping and augmenting scenario-based findings through cluster analysis.
+
+## 1. Purpose and Principles
+
+- **Purpose**: Reduce analysis cost and improve consistency by grouping repetitive security patterns into representative-sample reviews (v4 section 10)
+- **Principle** (v4 section 1): "A cluster does not guarantee identical results. A cluster provides the possibility of applying the same review strategy."
+- **Unit** (v4 section 4): `(Endpoint, Sink)` source-to-sink dataflow path
+- **Essence** (v4 section 10): "Cluster security-meaningful flows, not code."
+
+## 2. Scope and Exclusions
+
+### 2.1 In Scope (N modules, M endpoints, K controllers)
+
+| Module | Controllers | Endpoints |
+|---|---:|---:|
+| {{MODULE_1}} | — | — |
+| {{MODULE_2}} | — | — |
+
+### 2.2 Excluded (separate track)
+
+- {{EXCLUSION_1}} — Reason: ...
+- {{EXCLUSION_2}} — Reason: ...
+
+## 3. Cluster Inventory
+
+| # | Cluster | v4 Category | Estimated Scale | Phase 2 Actual | Key Scenarios |
+|---|---|---|---|---|---|
+| **C1** | Endpoint-level auth/authz gaps | Conditional auth (section 3.3) | ~N endpoints | Phase 3 pending | S_,S_,S_ |
+| **C2** | Hardcoded shared-secret | Sanitization/Validation gap | N endpoints | N matches | S_ |
+| **C3** | SSL/Hostname verification bypass | Trust boundary | N sites | N matches | S_ |
+| **C4** | Sensitive data logging | Data protection | N modules | N matches | S_ |
+| **C5** | Unsafe deserialization (XML/XStream/XXE) | Trust boundary | N sites | N matches | S_ |
+
+## 4. Per-Cluster Detail
+
+### C1. Endpoint-level Auth/Authz Gaps
+
+#### Feature (v4 section 5.1)
+| Element | Value |
+|---|---|
+| Source | HTTP request (PathVariable, RequestBody, Header) |
+| Transformation | Controller method dispatch |
+| Validation/Sanitization | `@Valid` only, auth interceptor **absent** or **logging-only** |
+| Sink | High-value state change (approval/cancel/extend) / external propagation |
+| Context | Gateway-dependent / internal-network assumption / per-endpoint policy varies |
+
+#### (Endpoint, Sink) Enumeration
+| Endpoint | Sink |
+|---|---|
+| `POST /api/...` | `ServiceClass` -> DB state change + callback |
+
+#### Representative Samples
+| Priority | Sample | Verdict |
+|---|---|---|
+| Highest risk | `Controller.method` — state change endpoint | Pending |
+
+---
+
+### C2–C5: (Repeat structure above for each cluster)
+
+---
+
+## 5. Cross-Cluster Interaction Matrix
+
+| | C1 | C2 | C3 | C4 | C5 |
+|---|---|---|---|---|---|
+| C1 | — | | | amplify | **RCE chain** |
+| C2 | | — | | | |
+| C3 | | | — | | |
+| C4 | amplify | | | — | |
+| C5 | **RCE chain** | | | | — |
+
+## 6. Off-Scope Findings
+
+Findings discovered during clustering that fall outside cluster definitions:
+
+| Finding | Severity | Description | Cluster Origin |
+|---|---|---|---|
+| | | | |
+
+## 7. Phase 2/3 Statistics
+
+- Total Semgrep matches: N
+- Per-cluster breakdown: see `semgrep-rules/results/SUMMARY.md`
+- C1 auth enumeration: see `semgrep-rules/results/c1/auth_enumeration.md`
+
+## 8. Bootstrapping Guide
+
+| Cluster | Stage | Consistency | Next Action |
+|---|---|---|---|
+| C1 | Stage 1 | Pending | 50%+ sample review |
+| C2 | Stage 1 | Pending | 50%+ sample review |
+| C3 | Stage 1 | Pending | 50%+ sample review |
+| C4 | Stage 1 | Pending | 50%+ sample review |
+| C5 | Stage 1 | Pending | 50%+ sample review |

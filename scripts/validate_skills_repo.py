@@ -11,9 +11,11 @@ ROOT = Path(__file__).resolve().parents[1]
 
 REQUIRED_SKILLS = [
     ROOT / "skills/static/sec-audit-static",
+    ROOT / "skills/static/sec-cluster",
     ROOT / "skills/runtime/sec-audit-dast",
     ROOT / "skills/external/external-software-analysis",
     ROOT / "skills/architect/security-architecture-review",
+    ROOT / "skills/methodology/security-testing-as-code",
 ]
 
 PRODUCER_SKILLS = [

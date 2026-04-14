@@ -1,22 +1,26 @@
 # oh-my-secuaudit
 
-Security skill collection for Codex-style workflows.
+Security skill collection for Claude Code and Codex workflows.
 
 ## Layout
 
 - `skills/static/sec-audit-static`: static security audit workflow (SAST/SCA/secret/reporting)
+- `skills/static/sec-cluster`: security code clustering workflow (v4 dataflow-based)
 - `skills/runtime/sec-audit-dast`: runtime/API assessment workflow (DAST/ASM)
 - `skills/external/external-software-analysis`: third-party software/binary analysis workflow
 - `skills/architect/security-architecture-review`: security architecture review workflow
+- `skills/methodology/security-testing-as-code`: assessment-as-project workflow (PoC, evidence, handoff)
 
 ## Capability Matrix
 
 | Skill | Primary Question | Typical Input | Primary Output | Consumed By |
 |---|---|---|---|---|
 | `sec-audit-static` | What is vulnerable in source code and dependencies? | source repo | finding JSON, task/final report JSON, markdown report, `reporting_summary` | `security-architecture-review` |
+| `sec-cluster` | Which code paths share the same security review strategy? | source repo + static findings | CLUSTERS.md, semgrep rules, REVIEW_CHECKLIST.md | `sec-audit-static`, `security-architecture-review` |
 | `sec-audit-dast` | What is exposed or exploitable at runtime? | domains/IPs/endpoints/ASM exports | SARIF/CSV findings, finding JSON, `reporting_summary` | `security-architecture-review` |
 | `external-software-analysis` | What risks exist in third-party binaries/packages? | jar/aar/so/external package | markdown report, finding JSON, architecture handoff markdown, `reporting_summary` | `security-architecture-review` |
 | `security-architecture-review` | How do all findings affect trust boundaries and critical flows? | static/dast/external outputs + repo evidence | `security-architecture-review.md` + `security-product-requirements.md` (tracked backlog and lifecycle delta) | final artifact |
+| `security-testing-as-code` | How to make assessment results reproducible and inheritable? | assessment findings + PoC code | project structure (artifacts/poc/, artifacts/runtime/, handoff-plan.md) | any producer skill |
 
 ## End-to-End Relationship Map
 
@@ -28,8 +32,13 @@ flowchart LR
 
     subgraph L1["Layer 1: Producer Runs"]
         S["sec-audit-static"]
+        CL["sec-cluster"]
         D["sec-audit-dast"]
         E["external-software-analysis"]
+    end
+
+    subgraph LM["Layer M: Methodology"]
+        STAC["security-testing-as-code"]
     end
 
     subgraph L2["Layer 2: Contract Normalization"]
@@ -47,10 +56,14 @@ flowchart LR
     end
 
     S -->|required| N
+    CL -.->|clustering context| S
+    CL -.->|cluster-to-scenario mapping| R
     D -->|required| N
     E -->|required| N
     E -.->|optional enrichment| EH["external-analysis-architecture-handoff.md"]
     T -.->|manual threat context| R
+    STAC -.->|project structure & PoC packaging| S
+    STAC -.->|project structure & evidence packaging| D
 
     N -->|required| R
     EH -.->|optional enrichment| R
@@ -75,21 +88,28 @@ flowchart LR
     classDef artifact fill:#f5f5f5,stroke:#616161,color:#212121;
     classDef feedback fill:#e0f2f1,stroke:#00695c,color:#004d40;
 
+    classDef cluster fill:#f3e5f5,stroke:#7b1fa2,color:#4a148c;
+    classDef methodology fill:#e8eaf6,stroke:#283593,color:#1a237e;
+
     class T threat;
     class S static;
+    class CL cluster;
     class D runtime;
     class E,EH external;
     class N contract;
     class R review;
     class O,P artifact;
     class FB feedback;
+    class STAC methodology;
 ```
 
 Legend:
 - Green: static producer flow
+- Purple: clustering (code pattern grouping)
 - Orange: runtime producer flow
 - Blue: external producer flow
 - Red: external threat context (manual/non-automated input)
+- Indigo: methodology (assessment-as-code)
 - Yellow: architecture synthesis
 - Gray: contract normalization and artifacts
 - Teal: feedback loop to producers
@@ -175,7 +195,42 @@ Release process:
 - Release notes: `RELEASE_NOTES.md`
 - Future plan: `ROADMAP.md`
 
+## Setup
+
+### Claude Code
+
+Each skill's `SKILL.md` works directly as a Claude Code instruction file. To use a skill:
+
+1. **Direct reference**: Ask Claude Code to read and follow a specific `SKILL.md`:
+   ```
+   Read skills/static/sec-audit-static/SKILL.md and run the static audit playbook for this codebase.
+   ```
+
+2. **Project commands**: Symlink or copy skill directories into your project's `.claude/commands/` for slash-command access:
+   ```bash
+   mkdir -p .claude/commands
+   ln -s "$(pwd)/skills/static/sec-audit-static/SKILL.md" .claude/commands/sec-audit-static.md
+   ```
+
+3. **CLAUDE.md integration**: Reference skills from your project's `CLAUDE.md`:
+   ```markdown
+   For security audits, follow the workflow in /path/to/oh-my-secuaudit/skills/static/sec-audit-static/SKILL.md
+   ```
+
+### Codex
+
+Each skill directory includes `agents/openai.yaml` for Codex-native discovery. Copy or symlink skill directories into `~/.codex/skills/local/`.
+
+## Related Reading
+
+Blog posts from [Code Before Breach](https://windshock.github.io/en/):
+
+| Skill | Post | Relevance |
+|---|---|---|
+| `security-testing-as-code` | [Security Diagnostics Reports Die Upon Publication](https://windshock.github.io/en/post/2026-03-17-security-testing-as-code/) | Direct source — assessment-as-project thesis |
+| `sec-cluster` | [Structure Builders Will Outlast Vulnerability Finders](https://windshock.github.io/en/post/2026-04-02-security-from-sense-to-structure/) | Systematic structure over ad-hoc finding |
+
 ## Notes
 
 - Each skill directory contains its own `SKILL.md`, references, schemas, and scripts.
-- Skills are separated by domain under `skills/static`, `skills/runtime`, `skills/external`, and `skills/architect`.
+- Skills are separated by domain under `skills/static`, `skills/runtime`, `skills/external`, `skills/architect`, and `skills/methodology`.
