@@ -2,14 +2,34 @@
 
 Security skill collection for Claude Code and Codex workflows.
 
+## Install (Claude Code)
+
+This repo is packaged as a Claude Code plugin marketplace named `windshock`. The plugin name is `oh-my-secuaudit`.
+
+```
+/plugin marketplace add windshock/oh-my-secuaudit
+/plugin install oh-my-secuaudit@windshock
+```
+
+To develop locally against this checkout:
+
+```
+/plugin marketplace add /Users/<you>/path/to/oh-my-secuaudit
+/plugin install oh-my-secuaudit@windshock
+```
+
+After install, the six SKILL.md files become discoverable to Claude Code by their frontmatter `description` and trigger automatically when relevant work appears.
+
 ## Layout
 
-- `skills/static/sec-audit-static`: static security audit workflow (SAST/SCA/secret/reporting)
-- `skills/static/sec-cluster`: security code clustering workflow (v4 dataflow-based)
-- `skills/runtime/sec-audit-dast`: runtime/API assessment workflow (DAST/ASM)
-- `skills/external/external-software-analysis`: third-party software/binary analysis workflow
-- `skills/architect/security-architecture-review`: security architecture review workflow
-- `skills/methodology/security-testing-as-code`: assessment-as-project workflow (PoC, evidence, handoff)
+Skills live under `plugins/oh-my-secuaudit/skills/` (Claude Code plugin convention: `<plugin-root>/skills/<skill-name>/SKILL.md`). Category groupings (architect / runtime / static / external / methodology) live in this README, not in directory paths.
+
+- `plugins/oh-my-secuaudit/skills/sec-audit-static` *(static)*: SAST/SCA/secret/reporting workflow
+- `plugins/oh-my-secuaudit/skills/sec-cluster` *(static)*: security code clustering workflow (v4 dataflow-based)
+- `plugins/oh-my-secuaudit/skills/sec-audit-dast` *(runtime)*: runtime/API assessment workflow (DAST/ASM)
+- `plugins/oh-my-secuaudit/skills/external-software-analysis` *(external)*: third-party software/binary analysis workflow
+- `plugins/oh-my-secuaudit/skills/security-architecture-review` *(architect)*: security architecture review workflow
+- `plugins/oh-my-secuaudit/skills/security-testing-as-code` *(methodology)*: assessment-as-project workflow (PoC, evidence, handoff)
 
 ## Capability Matrix
 
@@ -199,22 +219,24 @@ Release process:
 
 ### Claude Code
 
-Each skill's `SKILL.md` works directly as a Claude Code instruction file. To use a skill:
+Preferred path — install as a plugin (see [Install](#install-claude-code) above). After install, skills auto-trigger from their frontmatter descriptions; no per-skill setup needed.
+
+Alternative paths (without the plugin):
 
 1. **Direct reference**: Ask Claude Code to read and follow a specific `SKILL.md`:
    ```
-   Read skills/static/sec-audit-static/SKILL.md and run the static audit playbook for this codebase.
+   Read plugins/oh-my-secuaudit/skills/sec-audit-static/SKILL.md and run the static audit playbook for this codebase.
    ```
 
-2. **Project commands**: Symlink or copy skill directories into your project's `.claude/commands/` for slash-command access:
+2. **Project commands**: Symlink skill directories into your project's `.claude/commands/`:
    ```bash
    mkdir -p .claude/commands
-   ln -s "$(pwd)/skills/static/sec-audit-static/SKILL.md" .claude/commands/sec-audit-static.md
+   ln -s "$(pwd)/plugins/oh-my-secuaudit/skills/sec-audit-static/SKILL.md" .claude/commands/sec-audit-static.md
    ```
 
 3. **CLAUDE.md integration**: Reference skills from your project's `CLAUDE.md`:
    ```markdown
-   For security audits, follow the workflow in /path/to/oh-my-secuaudit/skills/static/sec-audit-static/SKILL.md
+   For security audits, follow the workflow in /path/to/oh-my-secuaudit/plugins/oh-my-secuaudit/skills/sec-audit-static/SKILL.md
    ```
 
 ### Codex
@@ -233,4 +255,4 @@ Blog posts from [Code Before Breach](https://windshock.github.io/en/):
 ## Notes
 
 - Each skill directory contains its own `SKILL.md`, references, schemas, and scripts.
-- Skills are separated by domain under `skills/static`, `skills/runtime`, `skills/external`, `skills/architect`, and `skills/methodology`.
+- Skills are flat under `plugins/oh-my-secuaudit/skills/`; the architect / runtime / static / external / methodology grouping is documented in the [Layout](#layout) section above.

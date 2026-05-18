@@ -1,0 +1,18 @@
+{
+  "name": "windshock",
+  "owner": {
+    "name": "windshock",
+    "url": "https://github.com/windshock"
+  },
+  "plugins": [
+    {
+      "name": "oh-my-secuaudit",
+      "source": "./plugins/oh-my-secuaudit",
+      "description": "Six security audit skills: sec-audit-static, sec-audit-dast, external-software-analysis, security-architecture-review, sec-cluster, security-testing-as-code.",
+      "version": "0.1.0",
+      "author": {"name": "windshock"},
+      "category": "security",
+      "homepage": "https://github.com/windshock/oh-my-secuaudit"
+    }
+  ]
+}

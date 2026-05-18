@@ -1,3 +1,8 @@
+---
+name: security-testing-as-code
+description: Transform security assessment deliverables from static documents (Word/Excel/portal) into version-controlled, executable projects. PoCs replace narrative claims; saved HTTP requests replace checkboxes; commit hashes enable exact-state reproduction. Use when scoping methodology for an audit, when an existing assessment needs to be made reproducible, or when assessment outputs must be inheritable across teams.
+---
+
 # security-testing-as-code: Assessment as Executable Project
 
 Transform security assessment deliverables from static documents into version-controlled, executable projects. Findings become reproducible code; evidence becomes artifacts; knowledge becomes inheritable structure.

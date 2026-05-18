@@ -10,18 +10,18 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 REQUIRED_SKILLS = [
-    ROOT / "skills/static/sec-audit-static",
-    ROOT / "skills/static/sec-cluster",
-    ROOT / "skills/runtime/sec-audit-dast",
-    ROOT / "skills/external/external-software-analysis",
-    ROOT / "skills/architect/security-architecture-review",
-    ROOT / "skills/methodology/security-testing-as-code",
+    ROOT / "plugins/oh-my-secuaudit/skills/sec-audit-static",
+    ROOT / "plugins/oh-my-secuaudit/skills/sec-cluster",
+    ROOT / "plugins/oh-my-secuaudit/skills/sec-audit-dast",
+    ROOT / "plugins/oh-my-secuaudit/skills/external-software-analysis",
+    ROOT / "plugins/oh-my-secuaudit/skills/security-architecture-review",
+    ROOT / "plugins/oh-my-secuaudit/skills/security-testing-as-code",
 ]
 
 PRODUCER_SKILLS = [
-    ROOT / "skills/static/sec-audit-static",
-    ROOT / "skills/runtime/sec-audit-dast",
-    ROOT / "skills/external/external-software-analysis",
+    ROOT / "plugins/oh-my-secuaudit/skills/sec-audit-static",
+    ROOT / "plugins/oh-my-secuaudit/skills/sec-audit-dast",
+    ROOT / "plugins/oh-my-secuaudit/skills/external-software-analysis",
 ]
 
 REQUIRED_PRODUCER_SCHEMAS = [
@@ -75,7 +75,7 @@ def main() -> int:
             if '"impacted_flow"' not in text:
                 errors.append(f"Missing 'impacted_flow' in finding schema: {finding_schema.relative_to(ROOT)}")
 
-    review_dir = ROOT / "skills/architect/security-architecture-review"
+    review_dir = ROOT / "plugins/oh-my-secuaudit/skills/security-architecture-review"
     for rel in REQUIRED_REVIEW_FILES:
         path = review_dir / rel
         if not path.exists():
@@ -98,9 +98,9 @@ def main() -> int:
             digest = next(iter(unique_hashes))
             notes.append(f"Shared reporting_summary_schema hash: {digest}")
 
-    recon_dir = ROOT / "skills/architect/security-architecture-recon"
+    recon_dir = ROOT / "plugins/oh-my-secuaudit/skills/security-architecture-recon"
     if recon_dir.exists():
-        errors.append("Deprecated skill directory still present: skills/architect/security-architecture-recon")
+        errors.append("Deprecated skill directory still present: skills/security-architecture-recon")
 
     if errors:
         print("[FAIL] skills repository validation failed")

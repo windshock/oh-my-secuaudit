@@ -1,3 +1,8 @@
+---
+name: sec-cluster
+description: Dataflow-based code clustering for security assessments. Groups (Endpoint, Sink) paths by shared review strategy so reviewers sample representative cases instead of exhaustively reviewing every path. Use when scoping manual review on a codebase with 50+ endpoints, repetitive sanitization patterns, or after initial SAST/SCA produces large finding sets that need triage.
+---
+
 # sec-cluster: Security Code Clustering
 
 Dataflow-based code clustering for security assessments. Groups (Endpoint, Sink) paths by shared review strategy, enabling representative-sample review instead of exhaustive per-path analysis.
