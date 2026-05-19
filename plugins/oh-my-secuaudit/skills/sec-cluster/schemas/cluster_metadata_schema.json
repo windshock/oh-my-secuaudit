@@ -1,0 +1,250 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Cluster Metadata",
+  "description": "Machine-readable sidecar for sec-cluster output. Captures bootstrapping stage, sample verdicts, and cross-cluster interactions for a single cluster review run. Markdown narratives (CLUSTERS.md, REVIEW_CHECKLIST.md) remain the human-facing artifact; this schema is the join point for downstream skills.",
+  "type": "object",
+  "required": [
+    "version",
+    "generated_at",
+    "clusters"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version (semver)."
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "project": {
+      "type": "string",
+      "description": "Target project label (codebase / repo URL)."
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "total_modules": { "type": "integer", "minimum": 0 },
+        "total_endpoints": { "type": "integer", "minimum": 0 },
+        "total_controllers": { "type": "integer", "minimum": 0 },
+        "in_scope_modules": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "excluded_modules": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "clusters": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "cluster_id",
+          "title",
+          "features",
+          "stage",
+          "last_reviewed_at"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "cluster_id": {
+            "type": "string",
+            "pattern": "^C[0-9]+(-[a-zA-Z0-9]+)?$",
+            "description": "Cluster identifier. Pattern: C<N> or C<N>-<subtype> (e.g., C5-XStream)."
+          },
+          "title": {
+            "type": "string",
+            "minLength": 3
+          },
+          "category": {
+            "type": "string",
+            "description": "Open string. Conventional values include: endpoint-auth, hardcoded-secret, ssl-bypass, sensitive-logging, unsafe-deserialization."
+          },
+          "features": {
+            "type": "object",
+            "description": "Five-element security feature table (v4 strategy section 5.1).",
+            "required": ["source", "sink"],
+            "additionalProperties": false,
+            "properties": {
+              "source": { "type": "string", "description": "Data entry point (HTTP request, external API response, etc.)" },
+              "transformation": { "type": "string", "description": "Processing logic." },
+              "validation": { "type": "string", "description": "Filtering/encoding presence (or absence)." },
+              "sink": { "type": "string", "description": "Final output point (DB, HTTP response, log, deserialization)." },
+              "context": { "type": "string", "description": "Auth state, data sensitivity, network boundary." }
+            }
+          },
+          "scope": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "estimated_candidates": { "type": "integer", "minimum": 0 },
+              "detected_candidates": { "type": "integer", "minimum": 0 },
+              "modules_touched": { "type": "integer", "minimum": 0 }
+            }
+          },
+          "endpoint_sink_pairs": {
+            "type": "array",
+            "description": "(Endpoint, Sink) enumeration. The cluster's minimum unit.",
+            "items": {
+              "type": "object",
+              "required": ["endpoint", "sink"],
+              "additionalProperties": false,
+              "properties": {
+                "endpoint": { "type": "string" },
+                "sink": { "type": "string" },
+                "module": { "type": "string" }
+              }
+            }
+          },
+          "stage": {
+            "type": "object",
+            "description": "Bootstrapping stage per v4 strategy section 5.5.",
+            "required": ["current"],
+            "additionalProperties": false,
+            "properties": {
+              "current": {
+                "type": "integer",
+                "enum": [1, 2, 3],
+                "description": "1=initial (50%+ review), 2=stabilization (consistency >=80%, sampling 30%), 3=operational (miss rate <5% for 2 cycles, representative-only)."
+              },
+              "intra_cluster_consistency_rate": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Percentage of reviewed samples sharing the same verdict."
+              },
+              "reviewer_agreement_kappa": {
+                "type": "number",
+                "minimum": -1,
+                "maximum": 1,
+                "description": "Cohen's Kappa across reviewers, when multiple. Optional."
+              },
+              "miss_rate_last_cycle": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Vulnerabilities missed by representative sampling, last cycle. Used for Stage 2->3 promotion."
+              }
+            }
+          },
+          "samples": {
+            "type": "array",
+            "description": "Reviewed samples with verdicts.",
+            "items": {
+              "type": "object",
+              "required": ["sample_id", "location", "verdict"],
+              "additionalProperties": false,
+              "properties": {
+                "sample_id": { "type": "string" },
+                "location": { "type": "string", "description": "file:line or controller#method" },
+                "verdict": {
+                  "type": "string",
+                  "enum": ["vulnerable", "not-vulnerable", "partial"]
+                },
+                "linked_finding_id": {
+                  "type": "string",
+                  "description": "FINDING-NNN ID if the sample produced a finding."
+                },
+                "notes": { "type": "string" }
+              }
+            }
+          },
+          "re_verification_triggers": {
+            "type": "array",
+            "description": "Events that reset this cluster to Stage 1.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "major-codebase-change",
+                "framework-upgrade",
+                "auth-config-change",
+                "new-partner-integration",
+                "new-aop-or-interceptor",
+                "missed-vulnerability-discovered"
+              ]
+            }
+          },
+          "linked_findings": {
+            "type": "array",
+            "description": "FINDING-NNN IDs that emerged from sample review.",
+            "items": { "type": "string" }
+          },
+          "linked_scenarios": {
+            "type": "array",
+            "description": "AS-NN scenario IDs from architecture review.",
+            "items": {
+              "type": "string",
+              "pattern": "^AS-[0-9]{2,}$"
+            }
+          },
+          "detection_tool": {
+            "type": "string",
+            "enum": [
+              "fortify+fortify_ml",
+              "semgrep",
+              "joern",
+              "codeql",
+              "manual",
+              "mixed"
+            ],
+            "description": "Primary tool used for dataflow extraction."
+          },
+          "last_reviewed_at": {
+            "type": "string",
+            "format": "date"
+          },
+          "notes": { "type": "string" }
+        }
+      }
+    },
+    "cross_cluster_interactions": {
+      "type": "array",
+      "description": "Cross-cluster attack chains (e.g., C1 x C5 = auth gap + unsafe deser -> RCE).",
+      "items": {
+        "type": "object",
+        "required": ["clusters", "severity", "description"],
+        "additionalProperties": false,
+        "properties": {
+          "clusters": {
+            "type": "array",
+            "minItems": 2,
+            "items": {
+              "type": "string",
+              "pattern": "^C[0-9]+(-[a-zA-Z0-9]+)?$"
+            }
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["Critical", "High", "Medium", "Low", "Info"]
+          },
+          "description": { "type": "string" },
+          "linked_finding_id": { "type": "string" }
+        }
+      }
+    },
+    "off_scope_findings": {
+      "type": "array",
+      "description": "Findings discovered during clustering that fall outside cluster definitions.",
+      "items": {
+        "type": "object",
+        "required": ["finding_id", "description"],
+        "additionalProperties": false,
+        "properties": {
+          "finding_id": { "type": "string" },
+          "severity": {
+            "type": "string",
+            "enum": ["Critical", "High", "Medium", "Low", "Info"]
+          },
+          "description": { "type": "string" },
+          "discovered_in_cluster": { "type": "string" }
+        }
+      }
+    }
+  }
+}

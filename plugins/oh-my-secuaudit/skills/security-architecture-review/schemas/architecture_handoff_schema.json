@@ -1,0 +1,197 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Architecture Review Handoff",
+  "description": "Machine-readable sidecar to the security-architecture-review markdown deliverable. Captures structural metadata (Flow IDs, Boundary IDs, Attack Scenarios, Risk tracking rows) so downstream skills can resolve cross-references without parsing prose. Markdown body remains the primary human-facing artifact.",
+  "type": "object",
+  "required": [
+    "version",
+    "generated_at",
+    "flows",
+    "boundaries",
+    "attack_scenarios"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "type": "string" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "project": { "type": "string" },
+    "review_document": {
+      "type": "string",
+      "description": "Path or URL to the corresponding markdown review."
+    },
+    "scope_commits": {
+      "type": "array",
+      "description": "Repos and commit hashes the review was conducted against (reproducibility).",
+      "items": {
+        "type": "object",
+        "required": ["repo", "commit"],
+        "additionalProperties": false,
+        "properties": {
+          "repo": { "type": "string" },
+          "branch": { "type": "string" },
+          "commit": { "type": "string", "minLength": 7 }
+        }
+      }
+    },
+    "flows": {
+      "type": "array",
+      "description": "Attack Surface Inventory rows. Each is a flow the review traced.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["flow_id", "surface", "priority"],
+        "additionalProperties": false,
+        "properties": {
+          "flow_id": {
+            "type": "string",
+            "pattern": "^F[0-9]+$",
+            "description": "F1, F2, ... Used by finding.impacted_flow."
+          },
+          "surface": { "type": "string", "description": "Endpoint or surface description." },
+          "exposure_type": {
+            "type": "string",
+            "description": "Open string. Examples: public-api, admin-control-plane, partner-boundary, batch, webview-bridge."
+          },
+          "auth_control": { "type": "string" },
+          "code_evidence": {
+            "type": "array",
+            "items": { "type": "string", "description": "file:line reference" }
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["Critical", "High", "Medium", "Low", "Info"]
+          }
+        }
+      }
+    },
+    "boundaries": {
+      "type": "array",
+      "description": "Trust Boundaries with components and controls.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["boundary_id", "name"],
+        "additionalProperties": false,
+        "properties": {
+          "boundary_id": {
+            "type": "string",
+            "pattern": "^B[0-9]+$"
+          },
+          "name": { "type": "string" },
+          "components": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "confirmed_controls": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "gaps": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "sensitive_data": {
+      "type": "array",
+      "description": "Sensitive Data Map entries.",
+      "items": {
+        "type": "object",
+        "required": ["data_class", "source"],
+        "additionalProperties": false,
+        "properties": {
+          "data_class": { "type": "string" },
+          "source": { "type": "string" },
+          "storage_or_flow": { "type": "string" },
+          "evidence": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "notes": { "type": "string" }
+        }
+      }
+    },
+    "attack_scenarios": {
+      "type": "array",
+      "description": "Attack Scenarios (AS-NN).",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["scenario_id", "title", "normal_flow", "abuse_path", "impact"],
+        "additionalProperties": false,
+        "properties": {
+          "scenario_id": {
+            "type": "string",
+            "pattern": "^AS-[0-9]{2,}$"
+          },
+          "title": { "type": "string" },
+          "normal_flow": { "type": "string", "description": "What the legitimate flow looks like." },
+          "abuse_path": { "type": "string", "description": "How an attacker abuses it." },
+          "impact": { "type": "string" },
+          "confirmation_needs": { "type": "string", "description": "What evidence is still required to fully confirm." }
+        }
+      }
+    },
+    "risk_tracking": {
+      "type": "array",
+      "description": "The cross-contract join table. Each row links a DFD node, attacker, finding, scenario, and SPR.",
+      "items": {
+        "type": "object",
+        "required": ["dfd_node", "finding_id", "scenario_id", "priority"],
+        "additionalProperties": false,
+        "properties": {
+          "dfd_node": { "type": "string", "description": "Component name from the DFD." },
+          "attacker": { "type": "string", "description": "Threat actor (e.g., external-anonymous, malicious-admin, partner)." },
+          "finding_id": {
+            "type": "string",
+            "description": "FINDING-NNN (or legacy F-ARCH-NNN until migrated per ADR-0004)."
+          },
+          "scenario_id": {
+            "type": "string",
+            "pattern": "^AS-[0-9]{2,}$"
+          },
+          "blast_radius": { "type": "string" },
+          "spr_id": {
+            "type": "string",
+            "pattern": "^SPR-[0-9]{3,}$"
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["P0", "P1", "P2", "P3"]
+          },
+          "confirmation": {
+            "type": "string",
+            "enum": [
+              "source-confirmed",
+              "runtime-confirmed",
+              "binary-confirmed",
+              "not-confirmed",
+              "claimed-fixed-verification-required"
+            ],
+            "description": "Aligned with finding_schema.provenance plus claimed-fixed special state used by SPR lifecycle."
+          }
+        }
+      }
+    },
+    "confidence_and_gaps": {
+      "type": "object",
+      "description": "Reviewer's self-assessment.",
+      "additionalProperties": false,
+      "properties": {
+        "high_confidence_areas": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "low_confidence_areas": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "out_of_scope": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

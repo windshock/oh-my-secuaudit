@@ -75,3 +75,4 @@ Keep this repository as a lightweight Codex/Claude skill collection, while ensur
 - Requirement lifecycle hardening (`SPR-*` collision/staleness checks).
 - Scenario -> finding -> flow -> requirement machine-readable mapping.
 - Multi-repo portfolio aggregation guidance.
+- Canonical source recovery for `external-software-analysis` (Maven `*-sources.jar`, Windows PDB / FLIRT, OSS GitHub source by version) as a preprocessing layer — reduces facet `unknown_*` on decompiled / external library code by restoring identifiers, types, and package context that decompilation strips.

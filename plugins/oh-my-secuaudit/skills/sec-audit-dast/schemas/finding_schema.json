@@ -82,6 +82,22 @@
             "description": "아키텍처 리뷰에서 사용하는 영향 흐름 ID 목록 (예: F1, F2)",
             "items": { "type": "string", "minLength": 1 },
             "minItems": 1
+          },
+          "cluster_id": {
+            "type": "string",
+            "description": "선택. sec-cluster의 cluster_metadata 참조. 패턴: C<N> 또는 C<N>-<subtype>",
+            "pattern": "^C[0-9]+(-[a-zA-Z0-9]+)?$"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "needs-manual-review",
+              "false-positive",
+              "fixed",
+              "deferred"
+            ],
+            "description": "Finding-level 라이프사이클. task.status와 별개 (ADR-0005)."
           }
         }
       }
