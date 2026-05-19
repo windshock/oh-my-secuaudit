@@ -33,6 +33,46 @@ REQUIRED_PRODUCER_SCHEMAS = [
 REQUIRED_REVIEW_FILES = [
     "references/security_product_requirements_template.md",
     "schemas/security_product_requirement_schema.json",
+    "schemas/architecture_handoff_schema.json",
+]
+
+REQUIRED_CLUSTER_FILES = [
+    "schemas/cluster_metadata_schema.json",
+]
+
+# Common finding-base contract enforced across all three producer finding schemas.
+# See docs/decisions/0001-shared-finding-schema.md and 0003-provenance-token-economy.md.
+COMMON_FINDING_REQUIRED = [
+    "id",
+    "title",
+    "severity",
+    "category",
+    "description",
+    "provenance",
+    "impacted_flow",
+]
+CANONICAL_SEVERITY_ENUM = ["Critical", "High", "Medium", "Low", "Info"]
+CANONICAL_PROVENANCE_ENUM = [
+    "binary-confirmed",
+    "source-confirmed",
+    "runtime-confirmed",
+    "not-confirmed",
+]
+# ADR-0005 finding-level status enum. Optional field, but if declared must match.
+CANONICAL_FINDING_STATUS_ENUM = [
+    "confirmed",
+    "needs-manual-review",
+    "false-positive",
+    "fixed",
+    "deferred",
+]
+
+# Common task-output top-level required keys (looser than finding base).
+COMMON_TASK_OUTPUT_REQUIRED = ["task_id", "status", "findings", "metadata"]
+COMMON_TASK_OUTPUT_METADATA_REQUIRED = [
+    "source_repo_url",
+    "source_repo_path",
+    "source_modules",
 ]
 
 
@@ -40,11 +80,78 @@ def sha256_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def validate_json(path: Path, errors: list[str]) -> None:
+def validate_json(path: Path, errors: list[str]) -> dict | None:
     try:
-        json.loads(path.read_text(encoding="utf-8"))
+        return json.loads(path.read_text(encoding="utf-8"))
     except Exception as exc:  # noqa: BLE001
         errors.append(f"Invalid JSON: {path.relative_to(ROOT)} ({exc})")
+        return None
+
+
+def check_finding_schema_base(
+    schema_path: Path, schema: dict, errors: list[str]
+) -> None:
+    """Enforce the common finding base on a producer's finding_schema.json."""
+    rel = schema_path.relative_to(ROOT)
+    items = (
+        schema.get("properties", {})
+        .get("findings", {})
+        .get("items", {})
+    )
+    if not items:
+        errors.append(f"{rel}: missing findings.items definition")
+        return
+
+    required = items.get("required", [])
+    missing = [k for k in COMMON_FINDING_REQUIRED if k not in required]
+    if missing:
+        errors.append(
+            f"{rel}: findings.items.required missing common base keys: {missing}"
+        )
+
+    props = items.get("properties", {})
+
+    sev_enum = props.get("severity", {}).get("enum")
+    if sev_enum != CANONICAL_SEVERITY_ENUM:
+        errors.append(
+            f"{rel}: severity enum does not match canonical "
+            f"(expected {CANONICAL_SEVERITY_ENUM}, got {sev_enum})"
+        )
+
+    prov_enum = props.get("provenance", {}).get("enum")
+    if prov_enum != CANONICAL_PROVENANCE_ENUM:
+        errors.append(
+            f"{rel}: provenance enum does not match canonical "
+            f"(expected {CANONICAL_PROVENANCE_ENUM}, got {prov_enum})"
+        )
+
+    if "status" in props:
+        status_enum = props["status"].get("enum")
+        if status_enum != CANONICAL_FINDING_STATUS_ENUM:
+            errors.append(
+                f"{rel}: finding-level status enum does not match canonical "
+                f"(expected {CANONICAL_FINDING_STATUS_ENUM}, got {status_enum})"
+            )
+
+
+def check_task_output_schema_base(
+    schema_path: Path, schema: dict, errors: list[str]
+) -> None:
+    rel = schema_path.relative_to(ROOT)
+    top_required = schema.get("required", [])
+    missing = [k for k in COMMON_TASK_OUTPUT_REQUIRED if k not in top_required]
+    if missing:
+        errors.append(f"{rel}: top-level required missing: {missing}")
+
+    metadata = schema.get("properties", {}).get("metadata", {})
+    md_required = metadata.get("required", [])
+    md_missing = [
+        k for k in COMMON_TASK_OUTPUT_METADATA_REQUIRED if k not in md_required
+    ]
+    if md_missing:
+        errors.append(
+            f"{rel}: metadata.required missing common keys: {md_missing}"
+        )
 
 
 def main() -> int:
@@ -63,23 +170,33 @@ def main() -> int:
         for schema_rel in REQUIRED_PRODUCER_SCHEMAS:
             schema_path = skill_dir / schema_rel
             if not schema_path.exists():
-                errors.append(f"Missing producer schema: {schema_path.relative_to(ROOT)}")
+                errors.append(
+                    f"Missing producer schema: {schema_path.relative_to(ROOT)}"
+                )
                 continue
-            validate_json(schema_path, errors)
-
-        finding_schema = skill_dir / "schemas/finding_schema.json"
-        if finding_schema.exists():
-            text = finding_schema.read_text(encoding="utf-8")
-            if '"provenance"' not in text:
-                errors.append(f"Missing 'provenance' in finding schema: {finding_schema.relative_to(ROOT)}")
-            if '"impacted_flow"' not in text:
-                errors.append(f"Missing 'impacted_flow' in finding schema: {finding_schema.relative_to(ROOT)}")
+            schema_obj = validate_json(schema_path, errors)
+            if schema_obj is None:
+                continue
+            if schema_rel.endswith("finding_schema.json"):
+                check_finding_schema_base(schema_path, schema_obj, errors)
+            elif schema_rel.endswith("task_output_schema.json"):
+                check_task_output_schema_base(schema_path, schema_obj, errors)
 
     review_dir = ROOT / "plugins/oh-my-secuaudit/skills/security-architecture-review"
     for rel in REQUIRED_REVIEW_FILES:
         path = review_dir / rel
         if not path.exists():
             errors.append(f"Missing review lifecycle asset: {path.relative_to(ROOT)}")
+        elif rel.endswith(".json"):
+            validate_json(path, errors)
+
+    cluster_dir = ROOT / "plugins/oh-my-secuaudit/skills/sec-cluster"
+    for rel in REQUIRED_CLUSTER_FILES:
+        path = cluster_dir / rel
+        if not path.exists():
+            errors.append(f"Missing cluster asset: {path.relative_to(ROOT)}")
+        elif rel.endswith(".json"):
+            validate_json(path, errors)
 
     shared_schema_paths = [
         p / "schemas/reporting_summary_schema.json"
