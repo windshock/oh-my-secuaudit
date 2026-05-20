@@ -39,7 +39,7 @@ Each arrow is a contract boundary that the CI validator (`scripts/validate_skill
 
 - **Producer**: `sec-audit-static`, `sec-audit-dast`, `external-software-analysis`
 - **Schema**: `plugins/oh-my-secuaudit/skills/<skill>/schemas/finding_schema.json`
-- **Hash-equal across the three producers** ([ADR-0001](../decisions/0001-shared-finding-schema.md))
+- **Common-base enforcement across the three producers** ([ADR-0001](../decisions/0001-shared-finding-schema.md)) — producer-specific extensions are permitted on top; the validator checks the common required fields and closed enums, not byte equality.
 - Per-finding `provenance` is a closed 4-value enum — token-economy compression ([ADR-0003](../decisions/0003-provenance-token-economy.md))
 - Per-finding `status` lifecycle: `confirmed | needs-manual-review | false-positive | fixed | deferred` ([ADR-0005](../decisions/0005-finding-level-status.md))
 - Per-finding `cluster_id` optional, links to cluster_metadata ([ADR-0002](../decisions/0002-cluster-vs-finding.md))
@@ -49,7 +49,7 @@ Each arrow is a contract boundary that the CI validator (`scripts/validate_skill
 
 - **Producer**: same three
 - **Schema**: `plugins/oh-my-secuaudit/skills/<skill>/schemas/task_output_schema.json`
-- **Hash-equal across the three producers** (newly enforced — [ADR-0001](../decisions/0001-shared-finding-schema.md))
+- **Common required keys across the three producers** ([ADR-0001](../decisions/0001-shared-finding-schema.md)) — the validator checks top-level required keys (`task_id`, `status`, `findings`, `metadata`) and metadata required fields (`source_repo_url`, `source_repo_path`, `source_modules`). Not byte-equal; producer-specific metadata is permitted.
 - Wraps `findings[]` with task-level metadata (`source_repo_url`, `state_store_run_id`, `snapshot_scope`).
 
 ### Reporting summary (existing, strict)
@@ -95,7 +95,7 @@ Each arrow is a contract boundary that the CI validator (`scripts/validate_skill
 Adding any required field is breaking and requires:
 1. ADR in `docs/decisions/`
 2. Migration plan in `docs/migration/` if existing data needs change
-3. Coordinated update across all hash-equal copies
+3. Coordinated update across all shared-schema copies (hash-equal for `reporting_summary_schema.json`; common-base for `finding_schema.json`; common required keys for `task_output_schema.json`)
 
 ## Migration
 
