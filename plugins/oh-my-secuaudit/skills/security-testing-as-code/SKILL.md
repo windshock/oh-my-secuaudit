@@ -106,6 +106,8 @@ For each finding:
    }
    ```
 
+   > **Note on schema scope**: this per-finding file format is the *methodology view* of a finding and is intentionally distinct from the producer `finding_schema.json`, which is a *task-wrapper* schema (`{task_id, status, findings[], metadata}`). The two are at different pipeline positions: producers emit task-level outputs, methodology files capture the per-finding assessor view with PoC/runtime evidence pointers. Per-finding files in `analysis/findings/` should NOT be validated against the producer `finding_schema.json` directly. The formal contract between the two views is tracked in [PR #4 / ADR-0006](https://github.com/windshock/oh-my-secuaudit/pull/4); the canonical schema and the producer↔methodology mapping will be defined in a follow-up ADR. The `status`, `severity`, and `provenance` enums in the template match the closed enums in [ADR-0003](../../../../../docs/decisions/0003-provenance-token-economy.md) and [ADR-0005](../../../../../docs/decisions/0005-finding-level-status.md) so values are interchangeable across the two views.
+
 2. **Build PoC** in `artifacts/poc/FINDING-001/`:
    - Executable code that demonstrates the vulnerability
    - `README.md` with exact reproduction steps
