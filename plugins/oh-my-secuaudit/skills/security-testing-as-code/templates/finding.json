@@ -8,7 +8,7 @@
   "impacted_flow": ["F1"],
   "evidence_path": "artifacts/poc/FINDING-NNN/",
   "runtime_evidence_path": "artifacts/runtime/requests/finding-NNN.http",
-  "status": "confirmed|suspected|false-positive|remediated",
+  "status": "confirmed|needs-manual-review|false-positive|fixed|deferred",
   "cwe_id": "",
   "affected_component": "",
   "affected_endpoint": "",
