@@ -5,89 +5,71 @@
 
 ## Context
 
-[ADR-0004](0004-finding-id-namespace.md) establishes a single `FINDING-NNN` namespace across all producers (`sec-audit-static`, `sec-audit-dast`, `external-software-analysis`, `security-architecture-review`). [ADR-0001](0001-shared-finding-schema.md) enforces a common base across producer finding schemas. [ADR-0002](0002-cluster-vs-finding.md) keeps clusters and findings as separate layers.
+[ADR-0004](0004-finding-id-namespace.md) establishes a single `FINDING-NNN` namespace across all finding-producing skills. [ADR-0001](0001-shared-finding-schema.md) enforces a common base across producer finding schemas (common-base enforcement, not byte-for-byte hash equality). [ADR-0002](0002-cluster-vs-finding.md) keeps clusters and findings as separate layers.
 
-What none of these specify: **where canonical `FINDING-NNN` minting and cross-producer deduplication actually happen.** In practice multiple producers may detect the same underlying vulnerability (SAST reads `handler.py:47`, DAST hits `/foo?q=`, external maps a known CVE on the dependency). Each producer's task_output contains a candidate finding. Without a reconciliation step, the single-namespace promise of ADR-0004 cannot be enforced — producer outputs would either collide on IDs or be allowed to duplicate the same vuln across producers.
+What none of these specify: **where canonical `FINDING-NNN` minting and cross-producer deduplication actually happen.** In practice multiple producers may detect the same underlying vulnerability — SAST on `handler.py:47`, DAST on `/foo?q=`, external on a dependency CVE. Each producer's task_output contains a candidate finding. Without a reconciliation step, the single-namespace promise of ADR-0004 cannot be enforced.
 
-A second constraint is LLM context budget ([ADR-0003](0003-provenance-token-economy.md)). Producers and downstream skills are expected to execute as bounded-context sub-processes. A reconciler that loads all producer outputs into one context window does not scale past a few clusters.
+A second constraint is LLM context budget ([ADR-0003](0003-provenance-token-economy.md)). Producers and downstream skills are expected to execute under bounded context. Any reconciliation contract must allow harness-level partitioning without prescribing it.
 
-[Issue #3](https://github.com/windshock/oh-my-secuaudit/issues/3) surfaced a symptom of the missing reconciliation contract: the `security-testing-as-code` methodology template and the producer `finding_schema.json` diverged because the role of STAC in the finding lifecycle was never spelled out.
+[Issue #3](https://github.com/windshock/oh-my-secuaudit/issues/3) surfaced a downstream symptom of the missing reconciliation contract: the `security-testing-as-code` methodology template and the producer `finding_schema.json` diverged because the role of STAC in the finding lifecycle was never spelled out.
 
 ## Decision
 
-**`security-testing-as-code` (STAC) owns finding reconciliation.** Producers emit per-task candidate findings. STAC ingests them, deduplicates against the canonical store, and mints canonical `FINDING-NNN`. The canonical store lives at `analysis/findings/<FINDING-NNN>.json` inside the assessment project tree that STAC already owns.
+**`security-testing-as-code` (STAC) owns finding reconciliation.** Producers emit per-task candidate findings. STAC ingests them, deduplicates, and mints canonical `FINDING-NNN`. The canonical store lives at `analysis/findings/<FINDING-NNN>.json` inside the assessment project tree that STAC already owns.
 
 ### Pipeline position
 
 ```
-sec-cluster
-   │  (cluster boundaries: C1, C2, ...)
+producers (sec-audit-static, sec-audit-dast,
+           external-software-analysis,
+           security-architecture-review)
+   │  per-task candidate task_outputs
    ▼
-producers (per cluster, parallel allowed)
-   │  task_output_<task_id>.json (candidates)
-   ▼
-STAC reconcile (per cluster, sub-process)
+STAC reconcile
    │  canonical FINDING-NNN
    ▼
 analysis/findings/  (canonical store)
    │
    ▼
-security-architecture-review (SPR consumes canonical findings)
+downstream consumers (SPR linkage, reporting roll-ups, ...)
 ```
 
-### Execution model: sub-process per cluster
+### Requirements on the reconciliation step
 
-Reconciliation runs as bounded sub-processes partitioned by `cluster_id`:
+The reconciliation step MUST be:
 
-- STAC main process holds only orchestration metadata (cluster list, ID allocations).
-- For each `cluster_id`, STAC spawns a sub-process that reads producer task_outputs filtered to that cluster.
-- Each sub-process matches candidate findings within its cluster (matching keys: `sink_class`, `affected_file:line`, `affected_endpoint`, semantic similarity) and emits canonical findings.
-- Findings without a `cluster_id` go to an off-cluster bucket with its own sub-process.
+- **Partitionable**: the harness MAY execute reconciliation as a single agent, as multiple subagents partitioned along any axis (cluster_id, source skill, attack surface), or as a sequential pass. This ADR does not prescribe the partition strategy; the harness chooses based on its own context primitives (Claude Code `context: fork` / subagents, Codex subagent orchestration, etc.).
+- **Deterministic**: given the same candidate inputs and the same algorithm version, the candidate → canonical mapping is the same. The set of canonical findings produced is independent of execution order.
+- **Reproducible**: the canonical store carries enough audit-trail metadata to re-derive itself from the producer task_outputs and the reconcile algorithm version. The specific audit-trail fields (source candidate references, input hashes, algorithm version, target snapshot) are defined in ADR-0007.
 
-### ID broker
+### Reconciliation vs consolidation
 
-To avoid cross-sub-process contention:
-
-- STAC main pre-allocates ID ranges per cluster (e.g., `C1 → FINDING-100..199`, `C2 → FINDING-200..299`, off-cluster → `FINDING-900..999`).
-- Sub-processes mint canonical IDs from their own range. No central broker, no coordination round-trip.
-- Range sizes are configurable; STAC's orchestration metadata records the allocation for reproducibility.
-
-### Reconciliation vs consolidation (clarification)
+These two operations are distinct and live in different skills:
 
 - **Reconciliation (this ADR, STAC)**: dedup at the finding layer. One vuln = one `FINDING-NNN`. Pre-condition for everything downstream.
-- **Consolidation (existing, SAR/SPR)**: rendering canonical findings grouped by remediation (SPR) or attack scenario (architecture_handoff). Post-condition view.
-
-These are distinct operations and live in different skills.
+- **Consolidation (existing, SAR/SPR)**: rendering canonical findings grouped by remediation requirement (SPR) or attack scenario (architecture_handoff). Post-condition view.
 
 ### Producer task_output handling
 
-- Producer task_outputs become "intermediate" artifacts stored under `artifacts/runtime/scans/<task_id>/task_output.json`.
-- Producer-side ID fields (if any) are task-local and are remapped to canonical `FINDING-NNN` by STAC.
-- Producer task_output remains validated by its own `task_output_schema.json` — this ADR does not change producer contracts.
+Producer task_outputs become intermediate candidate artifacts. They are not the canonical store, and downstream skills that need a canonical view must consume the canonical store rather than per-task outputs. The producer `task_output_schema.json` contracts (ADR-0001) are not changed by this ADR.
 
-### Canonical finding shape (resolves issue #3)
+## Out of scope (deferred)
 
-The canonical `analysis/findings/<FINDING-NNN>.json` validates against the producer `finding_schema.json` (per ADR-0001 common base) with optional fields added by STAC at reconcile time:
+This ADR establishes the owner and the abstract requirements only. The following are explicitly deferred:
 
-- `evidence_path` (optional): pointer to `artifacts/poc/<FINDING-NNN>/`
-- `runtime_evidence_path` (optional): pointer to `artifacts/runtime/requests/finding-<NNN>.http`
-- `metadata.source_skill` (per ADR-0004): list of producers that contributed candidates to this canonical finding.
-
-The methodology template `security-testing-as-code/templates/finding.json` is realigned to this canonical shape: status enum unified to the [ADR-0005](0005-finding-level-status.md) set, container shape consistent with producer schema, methodology-only fields moved to optional extensions on the canonical schema.
-
-`target_state` (commit/version/snapshot_date) lives at assessment level (`analysis/target_state.json` or README), not per finding.
+- **Canonical finding schema shape, producer ID semantics (candidate vs canonical), provenance aggregation rules, `metadata.source_skill` cardinality, `cluster_id` cardinality, audit-trail field specifics** → **ADR-0007** (canonical finding schema).
+- **Cross-cluster duplicate routing, cluster split/merge, security-architecture-review-originated finding flow, README End-to-End Relationship Map "Normalize" layer ownership, validator boundary across producer task_output / canonical per-finding / methodology template** → **ADR-0008** (cross-skill reconciliation contract).
+- **Harness execution model** (sub-process partitioning strategy, ID range allocation, matching algorithm details, fuzzy match thresholds, human-gate UX) → implementation guidance, not ADR-level.
 
 ## Consequences
 
-- The "no duplicate finding" promise of ADR-0004 is now enforceable, not just declared.
+- The "no duplicate finding" promise of ADR-0004 has a named owner. The contract gap behind that promise can now be closed by ADR-0007 (schema) and ADR-0008 (cross-skill routing).
 - Producers stay symmetric — none is promoted to reconciler.
-- Sub-process partitioning keeps each reconciliation execution bounded by cluster size (typically tens of candidates), compatible with the token-economy constraints of ADR-0003.
-- Producer task_outputs become intermediate (candidate) artifacts; this is a documentation change, not a schema change.
-- Issue #3's methodology/producer schema divergence resolves: one schema with optional STAC-filled extensions, not two parallel schemas.
-- ADR-0001 hash-equality remains scoped to the three producers; STAC's canonical finding shape extends the common base with documented optional fields.
-- Future: when sub-process architecture lands formally, the ID range allocation table and reconciliation matching rules will need their own implementation spec. This ADR establishes the model; the wire-level details follow.
+- Harness-level execution detail stays out of the contract. Both Claude Code (`context: fork`, subagents) and Codex (explicit subagent orchestration) can implement the partitioning consistently with their primitives.
+- Producer task_outputs are reframed as intermediate (candidate) artifacts. This is documentation framing, not a schema change to producer contracts.
+- Issue #3 cannot be fully resolved by this ADR alone — it requires ADR-0007 to define the canonical schema and the realignment of `security-testing-as-code/templates/finding.json`. This ADR is a prerequisite.
 
-## Open items
+## Open items (tracked separately)
 
-- Matching algorithm specifics (exact match keys, similarity threshold for fuzzy matches, human-in-the-loop UX) — defer to implementation spec.
-- Whether SAR's architecture-review findings (which carry `metadata.source_skill: security-architecture-review` per ADR-0004) flow through STAC reconciliation or are minted directly. Likely STAC for consistency, but TBD.
+- `docs/contracts/README.md` describes ADR-0001 as "hash-equal across the three producers". The validator actually enforces common-base, not byte-equality (see `scripts/validate_skills_repo.py`). That stale phrasing is a separate small docs fix, not part of this ADR.
+- `security-testing-as-code/templates/finding.json` already drifts from ADR-0005 (status enum) and from any future canonical schema. Realignment lands with the ADR-0007 implementation PR.
