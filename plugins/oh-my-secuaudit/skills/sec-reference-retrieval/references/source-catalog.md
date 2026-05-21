@@ -31,16 +31,23 @@ The catalog is intentionally narrow in slice 1. Adding a source is a separate PR
 - **Role**: recent CVE + patch URL + affected version range
 - **License**: public, official API
 - **Fetch verb**: `gh api`
-- **API pattern (search)**:
+- **API pattern (search by CWE)** — note: numeric CWE ID only; `CWE-` prefix MUST be stripped:
   ```
-  gh api -X GET /advisories -F cwes=CWE-NNN -F per_page=20 -F sort=updated
+  # CWE-918 → numeric 918
+  gh api "/advisories?cwes=918&per_page=20&sort=updated"
   ```
+  Confirmed 2026-05-22: `cwes=CWE-918` returns zero results (silent failure); `cwes=918` returns the expected list. This is a GHSA REST API quirk — the response shape preserves `CWE-NNN` in the `cwes[].cwe_id` field, only the *query parameter* requires the numeric form.
 - **API pattern (single advisory)**:
   ```
   gh api /advisories/GHSA-xxxx-yyyy-zzzz
   ```
-- **Evidence-refs token format**: `GHSA-xxxx-yyyy-zzzz; commit:<short_sha>` — the commit SHA comes from the advisory's patch URL, typically `https://github.com/<owner>/<repo>/commit/<sha>`
-- **Fallback**: `gh api graphql` if REST rate-limits
+- **API pattern (patch commit recovery)** — if the advisory text does not link a commit directly, search the upstream repo's path history:
+  ```
+  gh api "/repos/<owner>/<repo>/commits?path=<vulnerable-file>&per_page=10"
+  ```
+  Look for a commit whose message references the fix (e.g., "fix: validate redirect URL protocol"). Slice-2 NocoDB precedent.
+- **Evidence-refs token format**: `GHSA-xxxx-yyyy-zzzz; commit:<short_sha>` — the commit SHA comes from the advisory's patch URL (typically `https://github.com/<owner>/<repo>/commit/<sha>`) or from the path-history recovery above.
+- **Fallback**: `gh api graphql` if REST rate-limits.
 
 ### 4. AppSec.fyi
 

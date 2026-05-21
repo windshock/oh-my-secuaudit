@@ -56,10 +56,15 @@ Tracking: issue [#7](https://github.com/windshock/oh-my-secuaudit/issues/7).
 Read `references/source-catalog.md` for per-source fetch verbs. Execute the four fetches in parallel:
 
 1. **GitHub Advisory Database (GHSA)**:
+
+   The GHSA REST endpoint accepts `cwes` as the **numeric CWE ID only** (e.g., `918`, `79`). The `CWE-` prefix MUST be stripped before the API call — `cwes=CWE-918` silently returns zero results (confirmed against the live API 2026-05-22). The skill's representation of CWE elsewhere (Evidence refs, ledger row, SKILL.md prose) keeps the `CWE-NNN` form; only the GHSA query strips the prefix.
+
    ```
-   gh api -X GET /advisories -F cwes=<primary_cwe> -F per_page=20 -F sort=updated
+   PRIMARY_CWE_NUM="${PRIMARY_CWE#CWE-}"     # e.g., CWE-918 → 918
+   gh api "/advisories?cwes=${PRIMARY_CWE_NUM}&per_page=20&sort=updated"
    ```
-   Filter results to advisories with both a patch commit and a CVSS score. Skip any advisory whose `ghsa_id` already appears in `security-field-notes/knowledge/appsec/synthesis-ledger.md` (check the live file at runtime, not a snapshot).
+
+   Filter results to advisories with both a patch commit reference and a CVSS score. If the advisory text does not link a patch commit directly, recover it via `gh api /repos/<owner>/<repo>/commits?path=<vulnerable-file>` against the upstream repo (this was the slice-2 NocoDB workflow — the GHSA page didn't link the patch commit). Skip any advisory whose `ghsa_id` already appears in `security-field-notes/knowledge/appsec/synthesis-ledger.md` (check the live file at runtime, not a snapshot).
 
 2. **CWE canonical definition**: `WebFetch https://cwe.mitre.org/data/definitions/<NNN>.html`. Use `primary_cwe` only; related CWEs need not be fetched unless synthesis ambiguity arises.
 
