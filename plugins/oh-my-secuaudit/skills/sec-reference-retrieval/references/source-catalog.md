@@ -22,8 +22,9 @@ The catalog is intentionally narrow in slice 1. Adding a source is a separate PR
 - **Fetch verb**: `WebFetch`
 - **URL pattern**: `https://cheatsheetseries.owasp.org/cheatsheets/<Sheet_Name>_Cheat_Sheet.html`
 - **Evidence-refs token format**: `OWASP <Sheet Name> Cheat Sheet`
-- **Slice 1 specific URLs**:
-  - SSRF → `https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html`
+- **Per-category URLs**:
+  - SSRF → `https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html` (slice 1)
+  - XSS → primary: `https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html`; supplementary: `DOM_based_XSS_Prevention_Cheat_Sheet.html`, `HTML5_Security_Cheat_Sheet.html` (slice 2)
 
 ### 3. GitHub Advisory Database (GHSA)
 
@@ -46,7 +47,11 @@ The catalog is intentionally narrow in slice 1. Adding a source is a separate PR
 - **Role**: curated discourse — recent practitioner notes per topic
 - **License**: individual curation (Carl Sampson); attribution-only, do not mirror content
 - **Fetch verb**: `WebFetch`
-- **URL pattern**: `https://www.appsec.fyi/<topic>.html` (e.g., `ssrf.html`, `xss.html`, `idor.html`, `rce.html`)
+- **URL pattern**: `https://www.appsec.fyi/<topic>.html`
+- **Per-category URLs (confirmed)**:
+  - SSRF → `https://www.appsec.fyi/ssrf.html` (slice 1)
+  - XSS → `https://www.appsec.fyi/xss.html` (slice 2)
+- Other candidate topic pages (unverified URL slug, confirm on first fetch): `idor.html`, `rce.html`, `sqli.html`, `deserialization.html`
 - **Evidence-refs token format**: `AppSec.fyi #<entry-number>` (the curation entries are numbered on each topic page)
 - **No-hit handling**: if AppSec.fyi has no entries matching the candidate, record explicitly as `(AppSec.fyi 직접 hit 없음)` in the `Sources matched` cell. Axios NO_PROXY (2026-05-21 ledger row) is the precedent.
 

@@ -52,3 +52,21 @@ Run before opening PR-B. Reject the row if any of the following appears anywhere
 - [ ] Credentials, tokens, or secrets in any form
 
 If the source `evidence_summary` contains any of these, redact in synthesis. The PR-B reviewer is the §14 governance gate and the second check.
+
+## Stale Guard Check (Phase 2.5)
+
+Document the result in the PR-B body before opening. The check is **manual / drill-only** in slices 1+2 — automated parsing is deferred (slice 3+).
+
+Steps:
+
+1. List existing ledger rows that share the new row's **primary CWE** or **vulnerability class** (e.g., when adding a CWE-79 XSS row, related rows would be other CWE-79 / CWE-80 / CWE-83 entries).
+2. For each related row, classify `Last verified`:
+   - **Fresh** if within 30 days for advisory-class sources (GHSA, vendor advisory), or 90 days for taxonomy and curation (CWE, OWASP CSS, AppSec.fyi)
+   - **Stale** if older than the above
+3. Confirm the synthesis cell of the **new** row does NOT cite any stale row as authoritative (referencing as historical context is permitted, but it must be framed as such).
+4. Record one of these forms in the PR-B body:
+   - `Stale Guard check: no prior related rows in ledger.`
+   - `Stale Guard check: N related rows (<list of patterns>, all Last verified <date> — fresh); no stale citations used.`
+   - `Stale Guard check: N related rows; M stale (<patterns>); cited only as historical context, not authoritative. Fresh rows: <list>.`
+
+The PR-B reviewer verifies the verdict before merge.

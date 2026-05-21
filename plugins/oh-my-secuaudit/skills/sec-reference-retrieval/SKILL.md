@@ -13,15 +13,16 @@ Given a security finding (typically from a producer skill), query four upstream 
 
 The skill does not produce knowledge of its own — it retrieves what already exists (CWE / OWASP / GHSA / AppSec.fyi), distills it into a reusable row, and submits it through the §14 PR-reviewed staging layer so future LLMs can read the row instead of re-running the same retrieval.
 
-## PoC Scope (Slice 1)
+## PoC Scope (Slice 1 + 2)
 
-This is the first PoC slice. Deliberate constraints:
+This skill is being built in narrow slices. Current covered:
 
-- **SSRF only** — `references/cwe-mapping.md` populates the SSRF row only. Other categories arrive in slice 2.
-- **Manual phase execution** — Claude follows the 4-phase playbook manually; no orchestration code.
+- **Categories**: `SSRF` (slice 1) + `XSS` (slice 2). Other categories deferred to slice 3+.
+- **Manual phase execution** — Claude follows the 4-phase playbook manually; no orchestration code (slice 3+).
 - **One ledger row per run** — no batching.
-- **PR-based write-back** — `security-field-notes` updates are human-opened PRs (auto-PR is slice 2+).
+- **PR-based write-back** — `security-field-notes` updates are human-opened PRs (auto-PR is slice 3+, intentionally delayed until ledger row shape stabilizes across multiple categories).
 - **No caching** — no Filesystem MCP, no vector store, no semantic cache. Each Phase 2 fetch is fresh.
+- **Stale guard: documented + drill, not enforced** — the rule + checklist is in this SKILL.md and `templates/ledger-row.md`; the dry-run output for each new row explicitly records its stale-check verdict against prior ledger rows. Automated enforcement is deferred (slice 3+).
 
 Tracking: issue [#7](https://github.com/windshock/oh-my-secuaudit/issues/7).
 
@@ -33,7 +34,7 @@ Tracking: issue [#7](https://github.com/windshock/oh-my-secuaudit/issues/7).
 
 ## Inputs
 
-- `category` — the finding's category string (e.g., `"SSRF"`, `"XSS"`, `"deserialization"`). Slice 1 supports `SSRF` only.
+- `category` — the finding's category string (e.g., `"SSRF"`, `"XSS"`, `"deserialization"`). Slices 1+2 support `SSRF` and `XSS`.
 - `evidence_summary` — short text describing the candidate (e.g., `"Image proxy endpoint follows redirect without validating destination host"`). Used only for synthesis context; never echoed into the ledger row verbatim (scrub guard).
 
 ## Outputs
@@ -58,7 +59,7 @@ Read `references/source-catalog.md` for per-source fetch verbs. Execute the four
    ```
    gh api -X GET /advisories -F cwes=<primary_cwe> -F per_page=20 -F sort=updated
    ```
-   Filter results to advisories with both a patch commit and a CVSS score. Skip any advisory whose `ghsa_id` already appears in `security-field-notes/knowledge/appsec/synthesis-ledger.md` (slice 1: the 3 backfill rows).
+   Filter results to advisories with both a patch commit and a CVSS score. Skip any advisory whose `ghsa_id` already appears in `security-field-notes/knowledge/appsec/synthesis-ledger.md` (check the live file at runtime, not a snapshot).
 
 2. **CWE canonical definition**: `WebFetch https://cwe.mitre.org/data/definitions/<NNN>.html`. Use `primary_cwe` only; related CWEs need not be fetched unless synthesis ambiguity arises.
 
@@ -67,6 +68,26 @@ Read `references/source-catalog.md` for per-source fetch verbs. Execute the four
 4. **AppSec.fyi**: `WebFetch` the relevant topic page (`https://www.appsec.fyi/<topic>.html`). If the page does not exist or has no relevant content for the candidate, **record the miss explicitly** in the `Sources matched` cell of the row (Axios precedent — see existing ledger row 2026-05-21 Axios NO_PROXY).
 
 If any source rate-limits or returns 5xx, retry once with exponential backoff. If still failing, record the source as `(unavailable at retrieval time)` in `Sources matched` and proceed.
+
+### Phase 2.5: Stale Guard Check (slice 2)
+
+Before composing the new row, perform an explicit stale check against the existing ledger. **The check is documented and run by the assessor; it is NOT yet automated** (automation is deferred to slice 3+).
+
+Procedure:
+
+1. List all existing rows in `synthesis-ledger.md` whose `Finding pattern` or `CWE(s)` is **related to the current candidate**. Two rows are "related" when:
+   - Same primary CWE, OR
+   - Same vulnerability class (e.g., SSRF + open redirect, XSS + DOM XSS), OR
+   - Same affected package family
+2. For each related row, classify its `Last verified` date:
+   - **Fresh** = within 30 days for advisory-class sources (GHSA / vendor advisories); within 90 days for taxonomy sources (CWE / OWASP CSS); within 90 days for AppSec.fyi (curation)
+   - **Stale** = older than the threshold above
+3. **Authoritative-use rule** — when composing the new row's `Synthesis`:
+   - May reference *fresh* prior rows for context (e.g., "similar to GHE notebook SSRF row 2026-05-21")
+   - MUST NOT cite *stale* rows as authoritative — they remain in the ledger as historical staging entries only
+4. Record the stale-guard check verdict in the PR-B body under a "Stale Guard check" section. Example: `Stale Guard check: 4 SSRF-family rows examined (Next.js / Axios / GHE / Coder, all Last verified 2026-05-21 — fresh); no stale citations used in this run.`
+
+If there are zero related rows, record `Stale Guard check: no prior related rows in ledger.`
 
 ### Phase 3: LLM Merge
 
@@ -89,7 +110,7 @@ Distill the four (or fewer, on misses) source outputs into a single dense synthe
    - `Sources matched`: list each source that hit. Misses recorded as `(<Source> 직접 hit 없음)` per Axios precedent
    - `Evidence refs`: GHSA-id; `commit:<short_sha>`; OWASP cheat sheet name; CWE-NNN — semicolon-separated
    - `Synthesis`: the Phase 3 cell
-   - `Used in`: `retrieval test (sec-reference-retrieval PoC slice 1)`
+   - `Used in`: `retrieval test (sec-reference-retrieval PoC slice <N>)` where `<N>` is the current slice
    - `Last verified`: today (ISO)
 
 2. **Scrub pass** (LLM-driven in slice 1, PR review is the §14 gate):
@@ -99,7 +120,7 @@ Distill the four (or fewer, on misses) source outputs into a single dense synthe
 3. **Open PR-B** against `windshock/security-field-notes`:
    - Branch: `ledger/<category-lowercase>-<ghsa-short>` (e.g., `ledger/ssrf-c4j6fc7j`)
    - Title: `ledger: add <category-uppercase> retrieval row for <ghsa_id>`
-   - Body: links the oh-my-secuaudit PR-A, references issue #7, attaches scrub confirmation
+   - Body: links the oh-my-secuaudit PR-A, references issue #7, attaches scrub confirmation, **and includes the Phase 2.5 Stale Guard check verdict**
    - **Do not auto-merge.** PR-B awaits §14 governance review.
 
 ## Governance Guards (§14 protocol from security-field-notes/AGENTS.md)
@@ -107,8 +128,8 @@ Distill the four (or fewer, on misses) source outputs into a single dense synthe
 The skill is bound by `security-field-notes/AGENTS.md §14`. These rules govern every run:
 
 1. **Ledger ≠ knowledge endpoint** — the row is a staging entry, not a canonical knowledge page
-2. **Reuse threshold** — only `security-field-notes` maintainers graduate rows to `knowledge/appsec/<topic>.md` after ≥3 hits; the skill never edits the `## Promotion Status` section
-3. **Stale rows non-authoritative** — when synthesizing, the skill MUST NOT cite a stale ledger row (>90 days for general; shorter for advisories) as authoritative
+2. **Reuse threshold** — only `security-field-notes` maintainers graduate rows to `knowledge/appsec/<topic>.md` after ≥3 hits. The skill MAY append a new finding pattern to `## Promotion Status` at `1 hit`, but MUST NOT increment hit counts on existing patterns or trigger graduation (those are human-curated decisions).
+3. **Stale rows non-authoritative** — when synthesizing, the skill MUST NOT cite a stale ledger row as authoritative. Thresholds: **30 days** for advisory-class sources (GHSA / vendor advisories), **90 days** for taxonomy and curation (CWE / OWASP CSS / AppSec.fyi). The Phase 2.5 Stale Guard Check materializes this rule per run and the verdict is recorded in the PR-B body.
 4. **Source + Evidence refs mandatory** — `Sources matched` and `Evidence refs` cells are never empty (recording a miss as `(직접 hit 없음)` still counts as filled)
 5. **Scrub responsibility** — every row goes through scrub before PR; PR review is the gate, not the only check
 6. **LLM_CONTEXT framing** — the row's `Used in` cell anchors it to a session, preserving the staging-layer framing
@@ -122,11 +143,12 @@ A run is considered successful when:
 
 - [ ] `category` resolves through `references/cwe-mapping.md` to a non-empty CWE list
 - [ ] Phase 2 fetched all four sources (or recorded misses explicitly)
+- [ ] Phase 2.5 Stale Guard check executed; verdict recorded in PR-B body
 - [ ] Phase 3 synthesis contains GHSA id, commit short SHA, version range, CVSS, fix mechanism in ≤3 sentences
 - [ ] Every Synthesis claim is backed by an Evidence-refs token
 - [ ] Row passes column-count and pipe-spacing lint against existing ledger rows
 - [ ] Scrub pass: no internal identifiers leaked into row or PR body
-- [ ] PR-B opened against `windshock/security-field-notes` with `Used in` = `retrieval test (sec-reference-retrieval PoC slice 1)`
+- [ ] PR-B opened against `windshock/security-field-notes` with `Used in` = `retrieval test (sec-reference-retrieval PoC slice <N>)`
 - [ ] PR-B not auto-merged
 
 ## Failure Conditions
