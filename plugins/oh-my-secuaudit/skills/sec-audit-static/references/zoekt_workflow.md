@@ -29,8 +29,22 @@ Use Zoekt as a candidate prefilter for large repositories to reduce downstream s
   - fixed +/- line window as final fallback
 
 ## Environment
-- Enable Zoekt path with `ZOEKT_ENABLED=1`.
+- Enable local Zoekt path with `ZOEKT_ENABLED=1`.
 - Optional index root override: `ZOEKT_INDEX_ROOT=<path>`.
+
+## Remote Zoekt (shared webserver) — offload indexing off the local disk
+Instead of indexing each repo locally (`~/.cache/zoekt` can grow multi-GB), query a shared
+`zoekt-webserver` that already holds the corpus. `engine=auto` prefers this when `ZOEKT_URL` is set.
+- `ZOEKT_URL`  base URL, e.g. `http://localhost:6070` (k8s: `kubectl -n zoekt port-forward svc/zoekt 6070:6070`)
+  or a NodePort such as `http://<worker-ip>:30670`.
+- `ZOEKT_REPO` zoekt `r:` repo filter. Unset => derived from `basename(--repo)`; empty => whole index.
+- The target repo must already be indexed on the server (index job / CronJob).
+- Output is the same grep-style `path:line:content` as `rg`; any HTTP failure falls back to `rg`.
+
+```bash
+ZOEKT_URL=http://localhost:6070 ZOEKT_REPO=my-repo \
+  code_search.sh --repo /path/to/my-repo --query '<sink-or-source-regex>' --engine auto
+```
 
 ## Example
 ```bash
